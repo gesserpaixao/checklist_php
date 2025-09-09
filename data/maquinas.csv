@@ -1,5 +1,5 @@
 id,tipo,nome,status
-1,empilhadeira,E50035,Inativo
+1,empilhadeira,E50035,disponivel
 2,empilhadeira,50036,disponivel
 3,transpaleteira,50037,em_manutencao
 4,contrabalancada,50038,Inativo

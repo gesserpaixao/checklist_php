@@ -1,5 +1,5 @@
 id,id_maquina,entrada,saida,responsavel,obs,data_inicio,data_fim,mecanico,status,descricao_problema,descricao_manutencao,anexos,check_id,aberto_por,id_checklist,prioridade
-m_teste_concluida,1,2025-09-02T10:00:00+02:00,,master,"Falha no motor",2025-09-02T10:00:00+02:00,2025-09-02T11:00:00+02:00,mecanico,concluida,"Problema no motor","Troca de óleo e filtro",,,,,
+m_teste_concluida,1,2025-09-02T10:00:00+02:00,,master,"Falha no motor",2025-09-02T10:00:00+02:00,2025-09-02T11:00:00+02:00,mecanico,liberada,"Problema no motor","Troca de óleo e filtro",,,,,
 m_teste_123,1,2025-08-30T19:00:00+02:00,,master,,2025-08-30T19:00:00+02:00,,mecanico,em_reparo,"Teste de um novo motor",,,,,
 m_teste_456,2,2025-08-30T19:00:00+02:00,,master,,2025-08-30T19:00:00+02:00,,mecanico,em_reparo,"Teste de um novo motor",,,,,
 m_concluida_789,3,2025-08-28T10:00:00+02:00,2025-08-29T11:00:00+02:00,supervisor,,2025-08-28T10:00:00+02:00,2025-08-29T11:00:00+02:00,mecanico,liberada,"Problema no motor","Troca de óleo e filtro",,,,,

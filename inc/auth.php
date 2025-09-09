@@ -1,11 +1,11 @@
 <?php
 // inc/auth.php
-// Inicia a sessão se ainda não estiver iniciada
+// Inicia a sess\u00e3o se ainda n\u00e3o estiver iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Inclui o arquivo de funções CSV
+// Inclui o arquivo de fun\u00e7\u00f5es CSV
 require_once __DIR__ . '/csv.php';
 
 function login($nome, $senha) {
@@ -54,27 +54,31 @@ function requireLogin() {
     }
 }
 
+function isLoggedIn() {
+    return isset($_SESSION['user']);
+}
+
 function isSupervisor() {
     $u = currentUser();
-    // Um supervisor também é um master
+    // Um supervisor tamb\u00e9m \u00e9 um master
     return $u && ($u['perfil'] === 'supervisor' || $u['perfil'] === 'master');
 }
 
 function isAdministrador() {
     $u = currentUser();
-    // Um administrador também é um master
+    // Um administrador tamb\u00e9m \u00e9 um master
     return $u && ($u['perfil'] === 'administrador' || $u['perfil'] === 'master');
 }
 
 function isMecanica() {
     $u = currentUser();
-    // Um mecânico também é um master
+    // Um mec\u00e2nico tamb\u00e9m \u00e9 um master
     return $u && ($u['perfil'] === 'mecanico' || $u['perfil'] === 'master');
 }
 
 function isOperador() {
     $u = currentUser();
-    // Um operador também é um master
+    // Um operador tamb\u00e9m \u00e9 um master
     return $u && ($u['perfil'] === 'operador' || $u['perfil'] === 'master');
 }
 

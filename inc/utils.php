@@ -42,4 +42,41 @@ function getLatestMaintenanceId($id_maquina, $manutencoes, $manutH) {
     }
     return $latest_id;
 }
+
+
+// Fun\u00e7\u00f5es auxiliares para uso em m\u00faltiplos scripts
+function safeTrim($v){ return is_string($v) ? trim($v, " \t\n\r\0\x0B\"") : $v; }
+
+function fixRowToHeader(array $row, int $headerCount): array {
+    if (count($row) === $headerCount) return $row;
+    if (count($row) < $headerCount) return array_pad($row, $headerCount, '');
+    $first = array_slice($row, 0, $headerCount - 1);
+    $last = array_slice($row, $headerCount - 1);
+    $first[] = implode(',', $last);
+    return $first;
+}
+
+function firstField(array $assoc, array $candidates) {
+    foreach ($candidates as $k) {
+        if (array_key_exists($k, $assoc) && $assoc[$k] !== '') return $assoc[$k];
+    }
+    return null;
+}
+
+function tryParseDate($raw) {
+    $raw = safeTrim($raw);
+    if ($raw === '' || $raw === null) return null;
+    try { return new DateTime($raw); } catch (Exception $e) {}
+    $formats = ['Y-m-d H:i:s', 'Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s', 'Y-m-d', 'd/m/Y'];
+    foreach ($formats as $fmt) {
+        $d = DateTime::createFromFormat($fmt, $raw);
+        if ($d) return $d;
+    }
+    if (preg_match('/(\d{4}-\d{2}-\d{2})/', $raw, $m)) {
+        $d = DateTime::createFromFormat('Y-m-d', $m[1]);
+        if ($d) return $d;
+    }
+    return null;
+}
+
 ?>
