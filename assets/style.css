@@ -1,0 +1,134 @@
+body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;background:#f3f4f6;color:#111}
+.container{max-width:900px;margin:24px auto;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.card.center{width:360px;margin:80px auto;padding:20px;text-align:center}
+input,select,textarea{display:block;width:100%;padding:8px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
+button{padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;border:none}
+.alert{background:#fee2e2;padding:8px;border-radius:6px;color:#991b1b}
+.muted{color:#6b7280;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.opcoes-radio {
+    display: flex; /* Makes the container a flexbox */
+    gap: 15px; /* Adds space between the radio button labels */
+    align-items: center; /* Vertically aligns the items in the center */
+}
+
+.opcoes-radio label {
+    display: flex; /* Makes each label a flex container */
+    align-items: center;
+    gap: 5px; /* Adds space between the radio button and its text */
+}
+.main-menu {
+    list-style: none; /* Remove os marcadores de lista */
+    padding: 0;
+    margin: 20px 0;
+    display: flex; /* Alinha os itens na horizontal */
+    gap: 25px; /* Adiciona espaço entre os links */
+    justify-content: center; /* Centraliza os itens no contêiner */
+}
+
+.main-menu li a {
+    text-decoration: none; /* Remove o sublinhado */
+    color: #333; /* Cor do texto */
+    font-weight: bold;
+    display: flex;
+    flex-direction: column; /* Organiza ícone e texto na vertical */
+    align-items: center; /* Centraliza os itens */
+    text-align: center;
+}
+
+.main-menu li a:hover {
+    color: #007bff; /* Muda a cor ao passar o mouse */
+}
+
+.main-menu li a i {
+    font-size: 24px; /* Tamanho do ícone */
+    margin-bottom: 5px; /* Espaço entre o ícone e o texto */
+}
+
+/* CSS para o cabeçalho do painel */
+        .header-painel {
+            display: flex;
+            justify-content: space-between; /* Alinha o conteúdo à esquerda e à direita */
+            align-items: center; /* Centraliza verticalmente */
+            padding: 15px 30px; /* Adiciona padding para os lados, como na imagem */
+            background-color: #f8f9fa; /* Cor de fundo suave */
+            border-bottom: 1px solid #dee2e6; /* Linha sutil para separar o cabeçalho */
+        }
+        .header-painel h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Espaço entre o nome do usuário e o link de Sair */
+        }
+        .user-info a {
+            text-decoration: none; /* Remove o sublinhado do link */
+            color: #333;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .user-info a:hover {
+            color: #007bff; /* Cor ao passar o mouse */
+        }
+        .user-info a i {
+            margin-right: 5px; /* Espaço entre o ícone e o texto "Sair" */
+        }
+
+        /* --- Estilos para os cards e a tabela (mantidos do código anterior) --- */
+        .dashboard-cards {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .card {
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            min-width: 150px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        .card.ativa { background-color: #d4edda; color: #155724; }
+        .card.manutencao { background-color: #fff3cd; color: #856404; }
+        .card.nao-conforme { background-color: #f8d7da; color: #721c24; }
+        .card.abertos { background-color: #cfe2ff; color: #084298; }
+        .card h3 { margin: 0 0 10px 0; font-size: 1.2em; }
+        .card p { margin: 0; font-size: 2em; font-weight: bold; }
+        .checklist-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .checklist-table th, .checklist-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .checklist-table th { background-color: #f2f2f2; }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            flex: 1;
+            margin-right: 15px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        /* Style para a seção do checklist */
+        #checklist-form {
+            display: none;
+        }
+        #checklist-form.visible {
+            display: block;
+        }
+
+        

@@ -1,0 +1,11 @@
+id,tipo,nome,status
+1,empilhadeira,E50035,Inativo
+2,empilhadeira,50036,disponivel
+3,transpaleteira,50037,em_manutencao
+4,contrabalancada,50038,Inativo
+5,glp,500039,Inativo
+6,"Máquina de Corte",50040,em_manutencao
+7,"Máquina de Corte",50041,em_manutencao
+8,"Máquina de Corte",50042,disponivel
+9,"Máquina de Corte",50043,disponivel
+10,contrabalancada,50044,disponivel

@@ -1,0 +1,70 @@
+tipo_maquina,chave,label
+geral,cracha_operador_valido,Crachá Operador Válido
+geral,freios,Freios
+geral,conectores,Conectores (Bateria/Máquinas)
+geral,rodas_tracao_carga,Rodas (Tração/Carga)
+geral,eletrica,Elétrica (Fiação/Sinalização/Horímetro/botões)
+geral,ventoinha_motores,Ventoinha Motores
+geral,bateria,Bateria
+geral,agua_bateria,Água Bateria
+geral,limpeza_geral,Limpeza Geral
+geral,limpeza_roletes,Limpeza (Roletes)
+geral,buzina_sirene_re,Buzina / Sirene de Ré / Luz Azul Seg.
+empilhadeira,botao_reverso,Botão de Reverso
+empilhadeira,direcao,Direção
+empilhadeira,elevacao,Elevação
+empilhadeira,retratil,Retrátil
+empilhadeira,inclinacao_garfos,Inclinação Garfos
+empilhadeira,deslocamento_garfos_le,Deslocamento (Garfos) LE
+empilhadeira,deslocamento_garfos_ld,Deslocamento (Garfos) LD
+empilhadeira,corrente_torre,Corrente da Torre
+empilhadeira,botao_parada_emergencia,Botão Parada Emergência
+empilhadeira,pedais,Pedais
+empilhadeira,extintor,Extintor
+empilhadeira,cinto_seguranca,Cinto de Segurança
+empilhadeira,buzina,Buzina
+transpaleteira,timao,Timão
+transpaleteira,controle_tracao,Controle Tração (Borboleta)
+transpaleteira,comandos_timao,Comandos Timão (Subida/Descida Garfos)
+transpaleteira,comando_buzina,Comando Timão (Buzina)
+transpaleteira,comando_anti_esmagamento,Comando Timão (Anti-Esmagamento)
+transpaleteira,botoeiras_garfos,Botoeiras (Subida/Descida Garfos)
+transpaleteira,botoeiras_buzina,Botoeiras (Buzina)
+transpaleteira,botoeiras_velocidade_alta,Botoeiras (Controle Velocidade Alta)
+contrabalancada,direcao,Direção
+contrabalancada,elevacao,Elevação
+contrabalancada,inclinacao,Inclinação
+contrabalancada,deslocamento_garfos_le,Deslocamento Garfos LE
+contrabalancada,deslocamento_garfos_ld,Deslocamento Garfos LD
+contrabalancada,pistao_torre,Pistão da Torre
+contrabalancada,oleo_motor,Óleo do Motor
+contrabalancada,nivel_agua,Nível de Água
+contrabalancada,oleo_transmissao,Óleo Transmissão
+contrabalancada,correntes_torre,Correntes da Torre
+contrabalancada,pinos_toldanas_canaletas,Pinos/Toldanas/Canaletas da Torre
+contrabalancada,sinal_sonoro,Sinal Sonoro de Velocidade
+contrabalancada,pedais,Pedais (freios/embreagem/acelerador)
+contrabalancada,cilindro_suporte_mangueira,CILINDRO, SUPORTE, CONEXÕES, MANGUEIRA DO CILINDRO
+contrabalancada,rodas_pneus,RODAS/PNEUS
+contrabalancada,parte_eletrica,PARTE ELÉTRICA (iluminação / informações do painel)
+contrabalancada,ventilador_radiador,VENTILADOR DO RADIADOR (para máquina a combustão)
+contrabalancada,extintor,EXTINTOR
+contrabalancada,cinto_seguranca,CINTO DE SEGURANÇA
+contrabalancada,buzina_sirene_re_luz_azul,BUZINA / SIRENE DE RÉ / LUZ AZUL SEG.
+glp,direcao,Direção
+glp,elevacao,Elevação
+glp,inclinacao,Inclinação
+glp,oleo_motor,Óleo do Motor
+glp,conexoes_cilindros_glp,CONEXÕES DAS MANGUEIRAS E CILINDROS GLP
+glp,luzes,Luzes
+glp,indicadores_painel,INDICADORES DE PAINEL
+glp,freio_estacionamento,FREIO DE ESTACIONAMENTO
+glp,rodas_pneus,RODAS/PNEUS
+glp,freio_servico,FREIO DE SERVIÇO
+glp,comandos_hidraulicos,COMANDOS HIDRÁULICOS
+glp,extintor,EXTINTOR
+glp,cinto_seguranca,CINTO DE SEGURANÇA
+glp,manometro_pressao_garra,MANÔMETRO DE PRESSÃO DA GARRA
+glp,manometro_combustivel,MANÔMETRO (COMBÚSTIVEL)
+glp,abertura_fechamento_garra,ABERTURA E FECHAMENTO DA GARRA
+glp,vazamento_geral,VAZAMENTO EM GERAL (água, óleo, gás)

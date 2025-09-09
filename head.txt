@@ -1,0 +1,28 @@
+<header class="header-painel">
+            <h1>Painel</h1>
+            <a href="dashboard.php">Voltar</a>
+            <div class="user-info">
+                <span><?=htmlspecialchars($u['nome'])?> (<?=htmlspecialchars($u['perfil'])?>)</span>
+                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
+            </div>
+        </header>
+        <ul class="main-menu">
+            <?php if(isOperador()): ?>
+                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
+            <?php endif; ?>
+            <?php if(isSupervisor()): ?>
+                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
+                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
+            <?php endif; ?>
+            <?php if(isMaster()): ?>
+                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Checklist</a></li>
+                <li><a href="aprovacao.php"><i class="fa-solid fa-circle-check"></i>Aprovação</a></li>
+                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecanina</a></li>
+            <?php endif; ?>
+            <?php if(isMecanica()): ?>
+                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecanina</a></li>
+            <?php endif; ?>
+            <li><a href="download_all.php"><i class="fa-solid fa-download"></i>Backup</a></li>
+            
+        </ul>
