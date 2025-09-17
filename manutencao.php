@@ -89,31 +89,36 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-     <header class="header-painel">
+      <header class="header-painel">
             <h1>Painel</h1>
             <ul class="main-menu">
                 <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
             </ul>
             <div class="user-info">
-                <span><?=htmlspecialchars($u['nome'])?> (<?=htmlspecialchars($u['perfil'])?>)</span>
+                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
                 <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
             </div>
         </header>
         <ul class="main-menu">
-            <?php if(isOperador() || isMaster()): ?>
+            <?php if (isOperador() || isMaster()): ?>
                 <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
             <?php endif; ?>
-            <?php if(isSupervisor() || isMaster()): ?>
+            <?php if (isSupervisor() || isMaster()): ?>
                 <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
                 <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
             <?php endif; ?>
-            <?php if(isMaster()): ?>
-                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-            <?php endif; ?>
-            <?php if(isMecanica()): ?>
+               <?php if (isMecanica()): ?>
                 <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
             <?php endif; ?>
-            <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Dowload</a></li>
+          
+             <?php if (isSupervisor() || isMaster()): ?>
+                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+            <?php endif; ?>
+
+             <?php if (isMaster()): ?>
+                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+            <?php endif; ?>
             <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
         </ul>
 

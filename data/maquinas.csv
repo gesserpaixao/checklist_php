@@ -1,11 +1,120 @@
-id,tipo,nome,status
-1,empilhadeira,E50035,disponivel
-2,empilhadeira,50036,disponivel
-3,transpaleteira,50037,em_manutencao
-4,contrabalancada,50038,Inativo
-5,glp,500039,Inativo
-6,"Máquina de Corte",50040,em_manutencao
-7,"Máquina de Corte",50041,em_manutencao
-8,"Máquina de Corte",50042,disponivel
-9,"Máquina de Corte",50043,disponivel
-10,contrabalancada,50044,disponivel
+id,tipo,nome,status,setor
+1,empilhadeira,E50035,disponivel,Dedicado
+2,empilhadeira,50036,disponivel,Dedicado
+3,transpaleteira,50037,disponivel,Dedicado
+4,contrabalancada,50038,em_manutencao,Dedicado
+5,glp,500039,disponivel,Dedicado
+"6,""Máquina de Corte"",50040,disponivel,Dedicado"
+"7,""Máquina de Corte"",50041,disponivel,Dedicado"
+"8,""Máquina de Corte"",50042,disponivel,Dedicado"
+"9,""Máquina de Corte"",50043,disponivel,Dedicado"
+10,contrabalancada,50044,disponivel,Dedicado
+11,emp-glp,18,disponivel,multclientes
+12,emp-glp,19,disponivel,multclientes
+13,emp-glp,20,disponivel,dedicado
+14,emp-glp,40003,disponivel,dedicado
+15,emp-glp,40009,disponivel,dedicado
+16,emp-glp,41114,disponivel,dedicado
+17,emp-glp,41115,disponivel,dedicado
+18,"empilhadeira contrabalan�ada",41083,disponivel,multclientes
+19,"empilhadeira contrabalan�ada",41084,disponivel,multclientes
+20,"empilhadeira el�trica",41015,disponivel,multclientes
+21,"empilhadeira el�trica",41016,disponivel,multclientes
+22,"empilhadeira el�trica",41017,disponivel,multclientes
+23,"empilhadeira el�trica",41018,disponivel,multclientes
+24,"empilhadeira el�trica",41019,disponivel,multclientes
+25,"empilhadeira el�trica",41020,disponivel,multclientes
+26,"empilhadeira el�trica",41021,disponivel,multclientes
+27,"empilhadeira el�trica",41022,disponivel,dedicado
+28,"empilhadeira el�trica",41023,disponivel,multclientes
+29,"empilhadeira el�trica",41024,disponivel,dedicado
+30,"empilhadeira el�trica",41025,disponivel,multclientes
+31,"empilhadeira el�trica",41026,disponivel,dedicado
+32,"empilhadeira el�trica",41027,disponivel,dedicado
+33,"empilhadeira el�trica",41035,disponivel,multclientes
+34,"empilhadeira el�trica",41071,disponivel,multclientes
+35,"empilhadeira el�trica",41074,disponivel,dedicado
+36,"empilhadeira el�trica",41075,disponivel,multclientes
+37,"empilhadeira el�trica",41085,disponivel,multclientes
+38,"empilhadeira el�trica",41086,disponivel,multclientes
+39,"empilhadeira el�trica",41087,disponivel,multclientes
+40,"m�quina limpesa el�trica",1,disponivel,dedicado
+41,"m�quina limpesa el�trica",3,disponivel,multclientes
+42,"m�quina limpesa el�trica",4,disponivel,multclientes
+43,"m�quina limpesa el�trica",13,disponivel,multclientes
+44,"m�quina limpesa manual",2,disponivel,dedicado
+45,"m�quina limpesa manual",5,disponivel,multclientes
+46,"paleteira manual 2500 kg",7,disponivel,dedicado
+47,transpaleteira,50001,disponivel,multclientes
+48,transpaleteira,50006,disponivel,multclientes
+49,transpaleteira,50035,disponivel,multclientes
+50,transpaleteira,50036,disponivel,multclientes
+51,transpaleteira,50037,disponivel,multclientes
+52,transpaleteira,50038,disponivel,multclientes
+53,transpaleteira,50039,disponivel,multclientes
+54,transpaleteira,50040,disponivel,multclientes
+55,transpaleteira,50041,disponivel,multclientes
+56,transpaleteira,50042,disponivel,multclientes
+57,transpaleteira,50043,disponivel,multclientes
+58,transpaleteira,50044,disponivel,multclientes
+59,transpaleteira,50045,disponivel,multclientes
+60,transpaleteira,50046,disponivel,multclientes
+61,transpaleteira,50047,disponivel,multclientes
+62,transpaleteira,50048,disponivel,multclientes
+63,transpaleteira,50049,disponivel,multclientes
+64,transpaleteira,50050,disponivel,multclientes
+65,transpaleteira,50051,disponivel,multclientes
+66,transpaleteira,50052,disponivel,multclientes
+67,transpaleteira,50053,disponivel,multclientes
+68,transpaleteira,50054,disponivel,multclientes
+69,transpaleteira,50055,disponivel,multclientes
+70,transpaleteira,50056,disponivel,dedicado
+71,transpaleteira,50057,disponivel,dedicado
+72,transpaleteira,50058,disponivel,dedicado
+73,transpaleteira,50059,disponivel,dedicado
+74,transpaleteira,50060,disponivel,dedicado
+75,transpaleteira,50061,disponivel,dedicado
+76,transpaleteira,50062,disponivel,dedicado
+77,transpaleteira,50063,disponivel,dedicado
+78,transpaleteira,50064,disponivel,dedicado
+79,transpaleteira,50065,disponivel,dedicado
+80,transpaleteira,50066,disponivel,dedicado
+81,transpaleteira,50067,disponivel,dedicado
+82,transpaleteira,50068,disponivel,dedicado
+83,transpaleteira,50069,disponivel,dedicado
+84,transpaleteira,50070,disponivel,multclientes
+85,transpaleteira,50071,disponivel,multclientes
+86,transpaleteira,50072,disponivel,multclientes
+87,transpaleteira,50073,disponivel,multclientes
+88,transpaleteira,50074,disponivel,multclientes
+89,transpaleteira,50075,disponivel,dedicado
+90,transpaleteira,50076,disponivel,dedicado
+91,transpaleteira,50078,disponivel,dedicado
+92,transpaleteira,50079,disponivel,multclientes
+93,transpaleteira,50101,disponivel,multclientes
+94,transpaleteira,50106,disponivel,multclientes
+95,transpaleteira,50107,disponivel,multclientes
+96,transpaleteira,50108,disponivel,multclientes
+97,transpaleteira,50120,disponivel,multclientes
+98,transpaleteira,50123,disponivel,multclientes
+99,transpaleteira,50127,disponivel,multclientes
+100,transpaleteira,50131,disponivel,multclientes
+101,transpaleteira,50138,disponivel,multclientes
+102,transpaleteira,50190,disponivel,multclientes
+103,transpaleteira,50191,disponivel,dedicado
+104,transpaleteira,50192,disponivel,dedicado
+105,transpaleteira,50193,disponivel,multclientes
+106,transpaleteira,50194,disponivel,multclientes
+107,transpaleteira,50195,disponivel,multclientes
+108,transpaleteira,50196,disponivel,multclientes
+109,transpaleteira,50198,disponivel,dedicado
+110,transpaleteira,50199,disponivel,multclientes
+111,transpaleteira,50200,disponivel,dedicado
+112,transpaleteira,50201,disponivel,multclientes
+113,transpaleteira,50202,disponivel,dedicado
+114,transpaleteira,50203,disponivel,multclientes
+115,transpaleteira,50242,disponivel,multclientes
+116,transpaleteira,50243,disponivel,multclientes
+117,transpaleteira,50247,disponivel,multclientes
+118,transpaleteira,50255,disponivel,multclientes
+119,transpaleteira,50204,disponivel,dedicado

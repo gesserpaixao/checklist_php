@@ -1,288 +1,414 @@
 <?php
-// Define o fuso hor\u00e1rio padr\u00e3o para evitar avisos
+declare(strict_types=1);
 date_default_timezone_set('America/Sao_Paulo');
 
-// --- Fun\u00e7\u00f5es de Utilit\u00e1rios ---
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/inc/auth.php';
+require_once __DIR__ . '/inc/csv.php';
+require_once __DIR__ . '/inc/utils.php';
 
-/**
- * Tenta converter uma string para um objeto DateTime.
- * Suporta v\u00e1rios formatos, incluindo ISO 8601.
- * @param string $dateString A string de data a ser parseada.
- * @return DateTime|false Um objeto DateTime se o parsing for bem-sucedido, ou false caso contr\u00e1rio.
- */
-function tryParseDate(string $dateString) {
-    try {
-        // Tenta criar um objeto DateTime a partir da string
-        $d = new DateTime($dateString);
-        return $d;
-    } catch (Exception $e) {
-        // Retorna false se a string n\u00e3o puder ser parseada
-        return false;
-    }
-}
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
-/**
- * Encontra o valor do primeiro campo v\u00e1lido em um array, com base em uma lista de chaves.
- * @param array $data O array de dados a ser pesquisado.
- * @param array $keys Uma lista de chaves em ordem de prefer\u00eancia.
- * @return mixed O valor do primeiro campo encontrado ou null se nenhum for encontrado.
- */
-function firstField(array $data, array $keys) {
-    foreach ($keys as $key) {
-        if (isset($data[$key]) && $data[$key] !== '') {
-            return $data[$key];
-        }
-    }
-    return null;
-}
-
-/**
- * Ajusta uma linha de dados para corresponder ao n\u00famero de colunas do cabe\u00e7alho.
- * @param array $row A linha de dados.
- * @param int $expected_count O n\u00famero de colunas esperado.
- * @return array A linha ajustada.
- */
-function fixRowToHeader(array $row, int $expected_count): array {
-    $current_count = count($row);
-    if ($current_count < $expected_count) {
-        return array_pad($row, $expected_count, '');
-    } elseif ($current_count > $expected_count) {
-        return array_slice($row, 0, $expected_count);
-    }
-    return $row;
-}
-
-// --- Fun\u00e7\u00f5es de Autentica\u00e7\u00e3o e CSV ---
-
-function requireLogin() {
-    // Implementa\u00e7\u00e3o de autentica\u00e7\u00e3o real
-}
-
-function csvRead(string $filename): array {
-    if (!file_exists($filename)) {
-        return ['header' => [], 'rows' => []];
-    }
-    $file = fopen($filename, 'r');
-    if ($file === false) {
-        return ['header' => [], 'rows' => []];
-    }
-    $header = fgetcsv($file);
-    $rows = [];
-    while (($row = fgetcsv($file)) !== false) {
-        $rows[] = $row;
-    }
-    fclose($file);
-    return ['header' => $header, 'rows' => $rows];
-}
-
-// --- L\u00f3gica Principal do Relat\u00f3rio ---
 requireLogin();
+// CORREÇÃO: Garante que a variável do usuário ($u) seja sempre um array válido.
+$u = currentUser() ?? ['nome' => 'Visitante', 'perfil' => 'N/A'];
 
-// Processamento dos par\u00e2metros da URL
-$id_maquina = $_GET['id_maquina'] ?? null;
-$data_inicio = $_GET['data_inicio'] ?? null;
-$data_fim = $_GET['data_fim'] ?? null;
+$logo_path = __DIR__ . '/assets/emp.png';
 
-$start_date_obj = DateTime::createFromFormat('Y-m-d', $data_inicio);
-$end_date_obj = DateTime::createFromFormat('Y-m-d', $data_fim);
-
-if ($end_date_obj) {
-    $end_date_obj->setTime(23, 59, 59);
+$logo_base64 = '';
+if (file_exists($logo_path) && is_readable($logo_path)) {
+    $type = pathinfo($logo_path, PATHINFO_EXTENSION);
+    $data = file_get_contents($logo_path);
+    if ($data !== false) {
+        $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
 }
 
-// Carrega os dados dos checklists e das m\u00e1quinas
-$checklistsCsv = csvRead(__DIR__ . '/data/checklists.csv');
-$rows = $checklistsCsv['rows'] ?? [];
-$header = $checklistsCsv['header'] ?? [];
+// --- 1. Parâmetros ---
+$id_maquina_url = $_GET['id_maquina'] ?? null;
+$data_inicio_url = $_GET['data_inicio'] ?? null;
+$data_fim_url = $_GET['data_fim'] ?? null;
 
-$maquinas_data = csvRead(__DIR__ . '/data/maquinas.csv');
-$maquinas_rows = $maquinas_data['rows'] ?? [];
-$maquinas_header = $maquinas_data['header'] ?? [];
+if (!$id_maquina_url || !$data_inicio_url || !$data_fim_url) {
+    die("Parâmetros de filtro ausentes (id_maquina, data_inicio, data_fim).");
+}
 
+try {
+    $data_inicio_obj = new DateTime($data_inicio_url . ' 00:00:00');
+    $data_fim_obj = new DateTime($data_fim_url . ' 23:59:59');
+} catch (Exception $e) {
+    die("Formato de data inválido.");
+}
+
+// --- 2. CSV ---
+$checklistsData = csvRead(__DIR__ . '/data/checklists.csv');
+$maquinasData   = csvRead(__DIR__ . '/data/maquinas.csv');
+$perguntasData  = csvRead(__DIR__ . '/data/perguntas.csv');
+
+$checklists_header = $checklistsData['header'] ?? [];
+$checklists_rows   = $checklistsData['rows'] ?? [];
+$maquinas_header   = $maquinasData['header'] ?? [];
+$maquinas_rows     = $maquinasData['rows'] ?? [];
+$perguntas_header  = $perguntasData['header'] ?? [];
+$perguntas_rows    = $perguntasData['rows'] ?? [];
+
+// Mapeia máquinas
 $maquinas_map = [];
 foreach ($maquinas_rows as $row) {
-    $row = fixRowToHeader($row, count($maquinas_header));
-    
+    if (count($row) !== count($maquinas_header)) continue;
     $m = array_combine($maquinas_header, $row);
-    
     $id = firstField($m, ['id', 'codigo', 'maquina_id']);
-    $nome = firstField($m, ['nome', 'descricao', 'modelo']);
-    $tipo = firstField($m, ['tipo', 'categoria', 'classe']);
-    
-    if (!$id) continue;
-    $maquinas_map[$id] = ['nome' => $nome, 'tipo' => $tipo];
+    if ($id) $maquinas_map[$id] = $m;
 }
 
-$maquina_info = $maquinas_map[$id_maquina] ?? ['nome' => 'N/A', 'tipo' => 'N/A'];
+$maquina_info    = $maquinas_map[$id_maquina_url] ?? ['nome' => 'N/D', 'modelo' => 'N/D', 'tipo' => 'N/D'];
+$nome_maquina    = firstField($maquina_info, ['nome', 'descricao', 'modelo']);
+$equipamento_num = firstField($maquina_info, ['id', 'codigo', 'maquina_id']);
+$tipo_maquina    = firstField($maquina_info, ['tipo', 'categoria']) ?? 'Equipamento';
+$setor_maquina    = firstField($maquina_info, ['setor']) ?? 'Equipamento';
 
-// Consolida\u00e7\u00e3o dos Dados do Checklist
-$dados = []; 
-$itens = []; 
-$debug_log = [];
-
-foreach ($rows as $index => $row) {
-    $row = fixRowToHeader($row, count($header));
-    
-    $ch = array_combine($header, $row);
-
-    $maquina_chk = firstField($ch, ['id_maquina', 'maquina_id', 'maquina']);
-    $data_raw = firstField($ch, ['data_abertura', 'data', 'inicio', 'data_fechamento', 'created_at']);
-    $turno = firstField($ch, ['turno', 'shift']);
-
-    if ($maquina_chk != $id_maquina) {
-        $debug_log[] = "Linha " . ($index + 2) . ": Ignorada. ID da m\u00e1quina n\u00e3o corresponde ({$maquina_chk} != {$id_maquina}).";
-        continue;
+// --- 3. Itens de verificação ---
+$itens_verificados = [];
+foreach ($perguntas_rows as $row) {
+    if (count($row) !== count($perguntas_header)) continue;
+    $p = array_combine($perguntas_header, $row);
+    if (strtolower($p['tipo_maquina']) === 'geral' || strtolower($p['tipo_maquina']) === strtolower($tipo_maquina)) {
+        $itens_verificados[$p['chave']] = $p['label'];
     }
-    
-    $data_obj = tryParseDate($data_raw);
-    
-    if (!$data_obj || $data_obj < $start_date_obj || $data_obj > $end_date_obj) {
-        $debug_log[] = "Linha " . ($index + 2) . ": Ignorada. Data fora do per\u00edodo de filtro ({$data_raw}).";
-        continue;
-    }
+}
+if (empty($itens_verificados)) {
+    $itens_verificados = [
+        'cracha_operador_valido' => 'Crachá Operador Válido',
+        'freios' => 'Freios',
+        'buzina_sirene_re' => 'Buzina / Sirene de Ré / Luz Azul Seg.',
+        'extintor' => 'Extintor',
+        'cinto_seguranca' => 'Cinto de Segurança',
+        'limpeza_geral' => 'Limpeza Geral',
+    ];
+}
 
-    if (!$turno) {
-        $debug_log[] = "Linha " . ($index + 2) . ": Ignorada. Turno n\u00e3o encontrado.";
-        continue;
+// Turnos baseados no CSV (A, B, C)
+$turnos_info = [
+    'A' => ['label' => '1º Turno'],
+    'B' => ['label' => '2º Turno'],
+    'C' => ['label' => '3º Turno'],
+];
+
+// Dias da semana
+$dias_semana = [];
+$periodo = new DatePeriod($data_inicio_obj, new DateInterval('P1D'), $data_fim_obj->modify('+1 day'));
+foreach ($periodo as $dia) {
+    $dias_semana[$dia->format('Y-m-d')] = [
+        'data_br' => $dia->format('d/m/Y'),
+        'dados_dia' => [
+            'A' => ['operador' => '', 'horimetro_inicial' => '', 'horimetro_final' => '', 'gestor_responsavel' => '', 'itens' => []],
+            'B' => ['operador' => '', 'horimetro_inicial' => '', 'horimetro_final' => '', 'gestor_responsavel' => '', 'itens' => []],
+            'C' => ['operador' => '', 'horimetro_inicial' => '', 'horimetro_final' => '', 'gestor_responsavel' => '', 'itens' => []],
+        ]
+    ];
+}
+
+// --- 4. Preenche dados ---
+foreach ($checklists_rows as $row) {
+    if (count($row) < count($checklists_header)) {
+        $row = array_pad($row, count($checklists_header), '');
     }
-    
-    $data_chk = $data_obj->format('Y-m-d');
-    
-    $respostas_raw = $ch['respostas_json'] ?? '';
-    
-    // NOVO: Refatorado para lidar com strings vazias e JSONs inv\u00e1lidos
-    if (empty(trim($respostas_raw))) {
-        $respostas = [];
-        $debug_log[] = "Linha " . ($index + 2) . ": Campo JSON vazio detectado. Assumindo array vazio.";
-    } else {
-        $respostas = json_decode($respostas_raw, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $debug_log[] = "Linha " . ($index + 2) . ": Erro ao decodificar JSON. Conte\u00fado lido: '" . htmlspecialchars($respostas_raw) . "'. Erro: " . json_last_error_msg();
-            continue;
+    if (count($row) !== count($checklists_header)) continue;
+
+    $c = array_combine($checklists_header, $row);
+
+    $maquina_id   = $c['id_maquina'] ?? null;
+    $maquina_setor   = $c['setor'] ?? null;
+    $data_raw     = $c['data_abertura'] ?? null;
+    $turno        = strtoupper(trim($c['turno'] ?? ''));
+    $operador     = trim($c['operador'] ?? '');
+    $h_ini        = trim($c['orimetro_inicial'] ?? '');
+    $h_fim        = trim($c['orimetro_final'] ?? '');
+    $gestor       = trim($c['aprovado_por'] ?? '');
+    $respostas_json = $c['respostas_json'] ?? '';
+
+    $dt_checklist = tryParseDate($data_raw);
+    if ($maquina_id === $id_maquina_url && $dt_checklist && $dt_checklist >= $data_inicio_obj && $dt_checklist <= $data_fim_obj) {
+        $data_fmt = $dt_checklist->format('Y-m-d');
+
+        if (isset($dias_semana[$data_fmt]['dados_dia'][$turno])) {
+            $dias_semana[$data_fmt]['dados_dia'][$turno]['operador'] = $operador;
+            $dias_semana[$data_fmt]['dados_dia'][$turno]['horimetro_inicial'] = $h_ini;
+            $dias_semana[$data_fmt]['dados_dia'][$turno]['horimetro_final']   = $h_fim;
+            $dias_semana[$data_fmt]['dados_dia'][$turno]['gestor_responsavel'] = $gestor;
+
+            $respostas = json_decode($respostas_json, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($respostas)) {
+                foreach ($respostas as $item => $status) {
+                    if (isset($itens_verificados[$item])) {
+                        $dias_semana[$data_fmt]['dados_dia'][$turno]['itens'][$item] = $status;
+                    }
+                }
+            }
         }
-    }
-
-    foreach ($respostas as $item) {
-        $nome_item = $item['item'] ?? '';
-        $resp = $item['resposta'] ?? '';
-        
-        if ($nome_item) {
-            $dados[$data_chk][$turno][$nome_item] = $resp;
-            $itens[$nome_item] = true;
-        }
-    }
-    if (count($respostas) > 0) {
-      $debug_log[] = "Linha " . ($index + 2) . ": Processada com sucesso. Encontrados dados para {$data_chk}, {$turno}.";
     }
 }
 
-$datas = array_keys($dados);
-sort($datas);
-$itens = array_keys($itens);
-sort($itens);
 
+ob_start();
 ?>
 
-<!doctype html>
-<html>
+
+<style>
+    @page {
+        margin: 5mm;
+    }
+    body {
+        font-family: 'DejaVu Sans', sans-serif;
+        font-size: 8px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .main-header-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 5px;
+    }
+    .main-header-table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+    .main-header-table .logo-cell {
+        text-align: left;
+        width: 100px;
+    }
+    .main-header-table .title-cell {
+        text-align: center;
+    }
+    .logo {
+        max-width: 100px;
+        max-height: 50px;
+        display: block;
+    }
+
+    h1 {
+        font-size: 14px;
+        text-align: center;
+        margin: 5px 0;
+    }
+    .header-box {
+        border: 1px solid #000;
+        padding: 2px;
+        margin-bottom: 2px;
+        background-color: #f2f2f2;
+    }
+    .header-box table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .header-box td {
+        vertical-align: middle;
+        padding: 0 5px;
+    }
+    .header-box .left-align {
+        text-align: left;
+    }
+    .header-box .right-align {
+        text-align: right;
+    }
+    p {
+        margin: 2px 0;
+    }
+
+    .checklist-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 5px;
+    }
+    .checklist-table th, .checklist-table td {
+        border: 1px solid #000;
+        padding: 1px;
+        text-align: center;
+    }
+    .checklist-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    .item-col {
+        text-align: left;
+        font-weight: bold;
+        width: 15%;
+    }
+    .group-header {
+        background-color: #d3d3d3;
+        font-weight: bold;
+        text-align: left;
+    }
+    .problema {
+        border: 2px solid red !important;
+    }
+</style>
+
 <head>
-    <meta charset="utf-8">
-    <title>Relat\u00f3rio Semanal - <?= htmlspecialchars($maquina_info['nome']) ?></title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .print-container { max-width: 1200px; margin: auto; padding: 20px; }
-        .report-header { text-align: center; margin-bottom: 20px; }
-        .report-header h2 { margin: 0; }
-        .report-header p { margin: 5px 0; font-size: 14px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; }
-        th { background: #eee; }
-        .item { text-align: left; }
-        .btn-container { text-align: center; margin-top: 20px; }
-        .btn-print { 
-            background:#6c63ff; 
-            color:#fff;
-            padding:10px 20px;
-            border-radius:6px;
-            border:none;
-            cursor:pointer;
-            font-size:16px;
-        }
-        .debug-section { background: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; font-size: 12px; }
-        .debug-section h3 { margin-top: 0; }
-        .debug-section pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
-        @media print {
-            .btn-print, .debug-section { display: none; }
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>PDF Visualizar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="assets/stylenew.css">
 </head>
+
+
+
 <body>
-    <div class="print-container">
-        <!-- SE\u00c7\u00c3O DE DIAGN\u00d3STICO -->
-        <div class="debug-section">
-            <h3>Diagn\u00f3stico da Consulta</h3>
-            <pre>
-Par\u00e2metros recebidos: <?= json_encode($_GET, JSON_PRETTY_PRINT) ?>
-ID da M\u00e1quina: <?= htmlspecialchars($id_maquina) ?>
-Data In\u00edcio: <?= $start_date_obj ? $start_date_obj->format('Y-m-d H:i:s') : 'Inv\u00e1lida' ?>
-Data Fim: <?= $end_date_obj ? $end_date_obj->format('Y-m-d H:i:s') : 'Inv\u00e1lida' ?>
-
-Mapeamento da M\u00e1quina '<?= htmlspecialchars($id_maquina) ?>':
-<?= json_encode($maquina_info, JSON_PRETTY_PRINT) ?>
-
-N\u00famero de colunas do cabe\u00e7alho do checklist: <?= count($header) ?>
-N\u00famero de linhas lidas no checklists.csv: <?= count($rows) ?>
-
-Logs de processamento do CSV:
-<?= implode("\n", $debug_log) ?>
-
-N\u00famero de linhas processadas que correspondem aos filtros: <?= count($dados) ?>
-            </pre>
-        </div>
-
-        <div class="report-header">
-            <h2>Relat\u00f3rio Semanal de Checklist</h2>
-            <h3>M\u00e1quina: <?= htmlspecialchars($maquina_info['nome']) ?> (<?= htmlspecialchars($id_maquina) ?>)</h3>
-            <p>Per\u00edodo: <?= date('d/m/Y', strtotime($data_inicio)) ?> a <?= date('d/m/Y', strtotime($data_fim)) ?></p>
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2">Itens a verificar</th>
-                    <?php foreach ($datas as $d): ?>
-                        <th colspan="3"><?= date('d/m/Y', strtotime($d)) ?></th>
-                    <?php endforeach; ?>
-                </tr>
-                <tr>
-                    <?php foreach ($datas as $d): ?>
-                        <th>A</th><th>B</th><th>C</th>
-                    <?php endforeach; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($itens)): ?>
-                    <tr><td colspan="100%">Nenhum dado encontrado para o per\u00edodo e m\u00e1quina selecionados.</td></tr>
-                <?php else: ?>
-                    <?php foreach ($itens as $item): ?>
-                        <tr>
-                            <td class="item"><?= htmlspecialchars($item) ?></td>
-                            <?php foreach ($datas as $d): ?>
-                                <?php foreach (['A','B','C'] as $t): ?>
-                                    <td>
-                                        <?= htmlspecialchars($dados[$d][$t][$item] ?? '-') ?>
-                                    </td>
-                                <?php endforeach; ?>
-                            <?php endforeach; ?>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <div class="btn-container">
-            <button class="btn-print" onclick="window.print()">Imprimir</button>
-        </div>
+ <header class="header-painel">
+    <h1>Painel</h1>
+    <ul class="main-menu">
+        <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
+    </ul>
+    <div class="user-info">
+        <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
+        <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
     </div>
+</header>
+<ul class="main-menu">
+    <?php if (isOperador() || isMaster()): ?>
+        <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
+    <?php endif; ?>
+    <?php if (isSupervisor() || isMaster()): ?>
+        <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
+        <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
+        <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+        <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+    <?php endif; ?>
+    <?php if (isMaster()): ?>
+        <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+        <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+        <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+    <?php endif; ?>
+    <?php if (isMecanica()): ?>
+        <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
+    <?php endif; ?>
+    <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
+</ul>
+
+    <table class="main-header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="<?= htmlspecialchars($logo_base64) ?>" alt="Logo da Empresa" class="logo">
+            </td>
+            <td class="title-cell">
+                <h1>Check List Operacional de <?= htmlspecialchars($tipo_maquina ?? 'Equipamento') ?></h1>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+    <div class="header-box">
+        <table>
+            <tr>
+                <td class="left-align">
+                    <p><strong>SETOR:</strong> Armazém <?= htmlspecialchars($setor_maquina ?? 'Equipamento') ?> | <strong>EQUIP. Nº:</strong> <?= htmlspecialchars($equipamento_num ?? 'N/D') ?></p>
+                </td>
+                <td class="right-align">
+                    <p><strong>Período:</strong> <?= htmlspecialchars($data_inicio_obj->format('d/m/Y')) ?> até <?= htmlspecialchars($data_fim_obj->format('d/m/Y')) ?></p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p style="font-size: 7px; text-align: center; line-height: 1;">
+        ● MARCAR "OK" NOS ÍTENS QUE ESTIVEREM EM ORDEM ● MARCAR COM UM "N/A" ITENS NÃO APLICÁVEIS ● MARCAR "X" NOS ITENS QUE ESTIVEREM COM PROBLEMAS
+    </p>
+
+    <table class="checklist-table">
+        <thead>
+            <tr>
+                <th rowspan="2">ITENS A SEREM VERIFICADOS</th>
+                <?php foreach ($dias_semana as $dia): ?>
+                    <th colspan="3"><?= $dia['data_br'] ?></th>
+                <?php endforeach; ?>
+            </tr>
+            <tr>
+                <?php foreach ($dias_semana as $dia): ?>
+                    <th>A</th><th>B</th><th>C</th>
+                <?php endforeach; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($itens_verificados as $k => $label): ?>
+                <tr>
+                    <td class="item-col"><?= htmlspecialchars($label) ?></td>
+                    <?php foreach ($dias_semana as $dia): ?>
+                        <?php foreach (['A', 'B', 'C'] as $t): ?>
+                            <?php
+                            $st = strtolower($dia['dados_dia'][$t]['itens'][$k] ?? '');
+                            $class_problema = '';
+                            $celula_conteudo = '';
+
+                            if ($st === 'ok' || $st === 'aprovado') {
+                                $celula_conteudo = 'OK';
+                            } elseif ($st === 'n/a') {
+                                $celula_conteudo = 'N/A';
+                            } elseif ($st === 'nc' || $st === 'x' || $st === 'problema') {
+                                $celula_conteudo = 'X';
+                                $class_problema = 'problema';
+                            }
+                            ?>
+                            <td class="<?= htmlspecialchars($class_problema) ?>">
+                                <?= htmlspecialchars($celula_conteudo) ?>
+                            </td>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </tr>
+            <?php endforeach; ?>
+            
+            <?php foreach ($turnos_info as $turno_key => $turno_details): ?>
+                <tr class="group-header">
+                    <td colspan="<?= 1 + count($dias_semana) * 3 ?>">
+                        <?= htmlspecialchars($turno_details['label']) ?> (___/___/____) (<?= htmlspecialchars($turno_key) ?>)
+                    </td>
+                </tr>
+                <tr>
+                    <td class="item-col">NOME DO OPERADOR (LEGÍVEL)</td>
+                    <?php foreach ($dias_semana as $data_str => $dia_info): ?>
+                        <td colspan="3"><?= htmlspecialchars($dia_info['dados_dia'][$turno_key]['operador'] ?? '') ?></td>
+                    <?php endforeach; ?>
+                </tr>
+                <tr>
+                    <td class="item-col">HORÍMETRO - INICIAL</td>
+                    <?php foreach ($dias_semana as $data_str => $dia_info): ?>
+                        <td colspan="3"><?= htmlspecialchars($dia_info['dados_dia'][$turno_key]['horimetro_inicial'] ?? '') ?></td>
+                    <?php endforeach; ?>
+                </tr>
+                <tr>
+                    <td class="item-col">HORÍMETRO - FINAL</td>
+                    <?php foreach ($dias_semana as $data_str => $dia_info): ?>
+                        <td colspan="3"><?= htmlspecialchars($dia_info['dados_dia'][$turno_key]['horimetro_final'] ?? '') ?></td>
+                    <?php endforeach; ?>
+                </tr>
+                <tr>
+                    <td class="item-col">GESTOR RESPONSÁVEL</td>
+                    <?php foreach ($dias_semana as $data_str => $dia_info): ?>
+                        <td colspan="3"><?= htmlspecialchars($dia_info['dados_dia'][$turno_key]['gestor_responsavel'] ?? '') ?></td>
+                    <?php endforeach; ?>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    
+    <p>Em caso de qualquer não conformidade o operador deverá informar seu superior imediato, e esse é o responsável por acompanhar o cumprimento do checklist e dar providências. <br><strong>OBSERVAÇÕES / NÃO CONFORMIDADES (VIDE VERSO)</strong></p>
+
 </body>
-</html>
+<?php
+$html = ob_get_clean();
+
+// --- 6. PDF ---
+$options = new Options();
+$options->set('defaultFont', 'DejaVu Sans');
+$options->set('isHtml5ParserEnabled', true);
+$options->set('isPhpEnabled', true);
+$options->set('isRemoteEnabled', true);
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html, 'UTF-8');
+$dompdf->setPaper('A4', 'landscape');
+$dompdf->render();
+
+$filename = "checklist_semanal_" . urlencode($id_maquina_url) . "_" . urlencode($data_inicio_url) . ".pdf";
+$dompdf->stream($filename, ["Attachment" => false]);
+exit;

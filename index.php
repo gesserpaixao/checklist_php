@@ -47,18 +47,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <title>Login - Checklist</title>
     <link rel="stylesheet" href="assets/stylenew.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
 </head>
 <body>
-<div class="card center">
-    <h2>Entrar</h2>
-    <?php if ($err): ?>
-        <div class="alert"><?= htmlspecialchars($err) ?></div>
-    <?php endif; ?>
-    <form method="post">
-        <label>Usu\u00e1rio<br><input name="nome" required></label><br>
-        <label>Senha<br><input name="senha" type="password" required></label><br>
-        <button>Entrar</button>
-    </form>
+<div class="container" style="display: flex;">
+    <div class="login-image">
+        <img src="assets/logo.jpg" alt="Logo da Empresa" class="header-logo">
+    </div>
+    <div class="card center">
+        <h2>Entrar</h2>
+        <?php if ($err): ?>
+            <div class="alert"><?= htmlspecialchars($err) ?></div>
+        <?php endif; ?>
+        <form method="post">
+            <label>Usuario<br><input name="nome" required></label><br>
+            <label>Senha<br><input name="senha" style="display: inline-block;" id="senha" type="password" required>
+                <img class="in-block" style="display: inline-block;" id="olho" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABDUlEQVQ4jd2SvW3DMBBGbwQVKlyo4BGC4FKFS4+TATKCNxAggkeoSpHSRQbwAB7AA7hQoUKFLH6E2qQQHfgHdpo0yQHX8T3exyPR/ytlQ8kOhgV7FvSx9+xglA3lM3DBgh0LPn/onbJhcQ0bv2SHlgVgQa/suFHVkCg7bm5gzB2OyvjlDFdDcoa19etZMN8Qp7oUDPEM2KFV1ZAQO2zPMBERO7Ra4JQNpRa4K4FDS0R0IdneCbQLb4/zh/c7QdH4NL40tPXrovFpjHQr6PJ6yr5hQV80PiUiIm1OKxZ0LICS8TWvpyyOf2DBQQtcXk8Zi3+JcKfNafVsjZ0WfGgJlZZQxZjdwzX+ykf6u/UF0Fwo5Apfcq8AAAAASUVORK5CYII=">
+            </label>
+            <br>
+            <button>Entrar</button>
+        </form>
+        <script>
+            var senha = $('#senha');
+            var olho= $("#olho");
+
+            olho.mousedown(function() {
+            senha.attr("type", "text");
+            });
+
+            olho.mouseup(function() {
+            senha.attr("type", "password");
+            });
+            // para evitar o problema de arrastar a imagem e a senha continuar exposta, 
+            //citada pelo nosso amigo nos comentários
+            $( "#olho" ).mouseout(function() { 
+            $("#senha").attr("type", "password");
+            });
+        </script>
+    </div>
 </div>
 </body>
 </html>

@@ -30,6 +30,12 @@ $manutCsv = csvRead(__DIR__.'/data/manutencoes.csv');
 $manutencoes = $manutCsv['rows'] ?? [];
 $manutH = $manutCsv['header'] ?? [];
 
+// DEBUG: Mostra o conteúdo da variável $manutencoes
+// echo '<pre>';
+// var_dump($manutencoes);
+// echo '</pre>';
+// exit; // Para a execução do script para que você veja a saída
+
 // Lógica para processar as ações do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'update_status') {
@@ -84,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (count($maq_row) === count($maqH)) {
                     $maq_data = array_combine($maqH, $maq_row);
                     if ($maq_data['id'] === $id_maquina_relacionada) {
-                        $maq_data['status'] = 'disponivel';
+                        $maq_data['status'] = 'em_liberacao';
                         $maq_row = array_values($maq_data);
                         break;
                     }
@@ -99,13 +105,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Filtrar as manutenções abertas
-$manutencoes_abertas = array_filter($manutencoes, function($manut) use ($manutH) {
-    if (count($manut) !== count($manutH)) {
-        return false;
-    }
-    $manut_data = array_combine($manutH, $manut);
-    return ($manut_data['status'] !== 'concluida' && $manut_data['status'] !== 'liberada');
-});
+    $manutencoes_abertas = array_filter($manutencoes, function($manut) use ($manutH) {
+        // Verifique se o número de colunas corresponde ao cabeçalho
+        if (count($manut) !== count($manutH)) {
+            return false;
+        }
+        
+        // Combine a linha com o cabeçalho para facilitar o acesso
+        $manut_data = array_combine($manutH, $manut);
+        
+        // Verifique o status da manutenção
+        $status_atual = $manut_data['status'] ?? '';
+        return in_array($status_atual, ['em_reparo', 'aguardando_pecas']);
+    });
 
 // Ordenar as manutenções abertas por data de início, da mais recente para a mais antiga
 usort($manutencoes_abertas, function($a, $b) use ($manutH) {
@@ -143,33 +155,37 @@ foreach ($manutencoes_abertas as $manut) {
 </head>
 <body>
     <header class="header-painel">
-        <h1>Painel</h1>
+            <h1>Painel</h1>
+            <ul class="main-menu">
+                <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
+            </ul>
+            <div class="user-info">
+                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
+                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
+            </div>
+        </header>
         <ul class="main-menu">
-            <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
+            <?php if (isOperador() || isMaster()): ?>
+                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
+            <?php endif; ?>
+            <?php if (isSupervisor() || isMaster()): ?>
+                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
+                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
+            <?php endif; ?>
+               <?php if (isMecanica()): ?>
+                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
+            <?php endif; ?>
+          
+             <?php if (isSupervisor() || isMaster()): ?>
+                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+            <?php endif; ?>
+
+             <?php if (isMaster()): ?>
+                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+            <?php endif; ?>
+            <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
         </ul>
-        <div class="user-info">
-            <span><?=htmlspecialchars($u['nome'])?> (<?=htmlspecialchars($u['perfil'])?>)</span>
-            <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
-        </div>
-    </header>
-    <ul class="main-menu">
-        <?php if(isOperador() || isMaster()): ?>
-            <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
-        <?php endif; ?>
-        <?php if(isSupervisor() || isMaster()): ?>
-            <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
-            <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
-        <?php endif; ?>
-        <?php if(isMaster()): ?>
-            <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-        <?php endif; ?>
-        <?php if(isMecanica()): ?>
-            <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
-        <?php endif; ?>
-        <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
-        <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Dowload</a></li>
-        <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
-    </ul>
 
     <main class="container">
         <h2>Painel de Mecânica</h2>

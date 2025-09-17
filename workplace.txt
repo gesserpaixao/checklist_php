@@ -1,0 +1,448 @@
+<?php
+
+// workplace.php
+
+declare(strict_types=1);
+date_default_timezone_set('America/Sao_Paulo');
+
+require_once __DIR__ . '/inc/auth.php';
+requireLogin();
+
+// Usuário logado
+$u = currentUser();
+
+require_once __DIR__ . '/inc/csv.php';
+require_once __DIR__ . '/inc/utils.php';
+
+// Leitura dos dados
+$maqCsv = csvRead(__DIR__ . '/data/maquinas.csv');
+$maquinas = $maqCsv['rows'] ?? [];
+$maqH = $maqCsv['header'] ?? [];
+
+$perguntaCsv = csvRead(__DIR__ . '/data/perguntas.csv');
+$perguntas = $perguntaCsv['rows'] ?? [];
+$perguntaH = $perguntaCsv['header'] ?? [];
+
+$checklistsCsv = csvRead(__DIR__ . '/data/checklists.csv');
+$checklists = $checklistsCsv['rows'] ?? [];
+$checklistH = $checklistsCsv['header'] ?? [];
+
+$manutencaoCsv = csvRead(__DIR__ . '/data/manutencoes.csv');
+$manutencoes = $manutencaoCsv['rows'] ?? [];
+$manutH = $manutencaoCsv['header'] ?? [];
+
+$erro_checklist = '';
+
+$maquinas_map = [];
+if (is_array($maquinas)) {
+    foreach ($maquinas as $r) {
+        if (count($r) === count($maqH)) {
+            $maq = array_combine($maqH, $r);
+            $maquinas_map[$maq['id']] = $maq;
+        }
+    }
+}
+
+// Lógica para carregar as perguntas via requisição AJAX
+if (isset($_GET['action']) && $_GET['action'] === 'get_perguntas' && isset($_GET['tipo_maquina'])) {
+    header('Content-Type: application/json');
+    $tipo_maquina = $_GET['tipo_maquina'];
+    
+    $perguntas_filtradas = [];
+    foreach ($perguntas as $p) {
+        if (count($p) === count($perguntaH)) {
+            $pergunta_data = array_combine($perguntaH, $p);
+            // Inclui perguntas do tipo 'geral' e do tipo da máquina selecionada
+            if ($pergunta_data['tipo_maquina'] === 'geral' || $pergunta_data['tipo_maquina'] === $tipo_maquina) {
+                $perguntas_filtradas[] = $pergunta_data;
+            }
+        }
+    }
+    echo json_encode($perguntas_filtradas);
+    exit; // Termina a execução para não carregar a página HTML
+}
+
+
+// Lógica para enviar a maquina para manutencao
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'enviar_manutencao') {
+    $id_maquina = $_POST['id_maquina'] ?? null;
+    $obs_manut = $_POST['obs_manut'] ?? '';
+    
+    // Atualizar status da máquina para 'em_manutencao'
+    $maquinas_temp = $maquinas;
+    foreach($maquinas_temp as &$maq_row) {
+        if (count($maq_row) === count($maqH)) {
+            $maq_data = array_combine($maqH, $maq_row);
+            if ($maq_data['id'] === $id_maquina) {
+                $maq_data['status'] = 'em_manutencao';
+                $maq_row = array_values($maq_data);
+                break;
+            }
+        }
+    }
+    csvWrite(__DIR__.'/data/maquinas.csv', $maqH, $maquinas_temp);
+
+    // Adicionar novo registro de manutenção
+    $novo_registro_manut = [
+        uniqid('m_'), // ID único da manutenção
+        $id_maquina,
+        date('c'), // Data de início
+        '', // Data de fim (vazio)
+        $u['nome'], // Responsável
+        'pendente', // Status da manutenção
+        $obs_manut, // Descrição do problema
+        '' // Descrição da manutenção (vazio)
+    ];
+    csvAppend(__DIR__.'/data/manutencoes.csv', $novo_registro_manut);
+
+    header('Location: workplace.php');
+    exit;
+}
+
+// Lógica para salvar o checklist
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && ($_POST['action'] === 'abrir_turno' || $_POST['action'] === 'fechar_turno')) {
+    $id_maquina = $_POST['maquina'] ?? null;
+    $orimetro = $_POST['orimetro'] ?? '';
+    $observacoes = $_POST['observacoes'] ?? '';
+    $respostas_raw = $_POST['respostas'] ?? [];
+    $id_checklist_aberto = $_POST['id_checklist_aberto'] ?? '';
+    $tipo_checklist = $_POST['action'] === 'abrir_turno' ? 'abertura' : 'fechamento';
+
+    // Captura o turno do formulário
+    $turno = $_POST['turno'] ?? '';
+
+    // Verificação se já existe um checklist aberto para a máquina
+    $checklist_aberto_existe = false;
+    foreach ($checklists as $c) {
+        if (count($c) !== count($checklistH)) continue;
+        $c_data = array_combine($checklistH, $c);
+        if (($c_data['id_maquina'] ?? '') === $id_maquina && ($c_data['tipo_checklist'] ?? '') === 'abertura' && ($c_data['status_checklist'] ?? '') === 'aberto') {
+            $checklist_aberto_existe = true;
+            $id_checklist_aberto = $c_data['id'] ?? '';
+            break;
+        }
+    }
+
+    if ($tipo_checklist === 'abertura') {
+        if ($checklist_aberto_existe) {
+            $erro_checklist = 'Já existe um checklist de abertura de turno em andamento para esta máquina.';
+        } else {
+            $respostas_serializadas = json_encode($respostas_raw);
+            $falhas = count(array_filter($respostas_raw, function($r) { return $r !== 'OK' && $r !== 'N/A'; }));
+
+            // Captura o setor da máquina
+            $setor = $maquinas_map[$id_maquina]['setor'] ?? '';
+
+            $novo_registro = [
+                uniqid('c_'), // id
+                $u['nome'], // operador
+                $id_maquina, // id_maquina
+                date('c'), // data_abertura (Formato RFC3339)
+                '', // data_fechamento (vazio)
+                $turno, // turno (agora vem do formulário)
+                'pendente', // status_checklist
+                $observacoes, // obs
+                $respostas_serializadas, // respostas_json
+                $falhas, // falhas
+                $orimetro, // orimetro_inicial
+                '', // orimetro_final (vazio)
+                $tipo_checklist, // tipo_checklist
+                '', // id_manutencao (vazio)
+                '', // aprovado_por (vazio)
+                $setor, // setor
+            ];
+            csvAppend(__DIR__.'/data/checklists.csv', $novo_registro);
+            
+            header('Location: workplace.php');
+            exit;
+        }
+    } elseif ($tipo_checklist === 'fechamento') {
+        if (!$checklist_aberto_existe) {
+            $erro_checklist = 'Não há um checklist de abertura de turno para esta máquina.';
+        } else {
+            foreach ($checklists as &$c) {
+                if (count($c) !== count($checklistH)) continue;
+                $c_data = array_combine($checklistH, $c);
+                if (($c_data['id'] ?? '') === $id_checklist_aberto) {
+                    $c_data['orimetro_final'] = $orimetro;
+                    $c_data['data_fechamento'] = date('c');
+                    $c_data['status_checklist'] = 'pendente'; 
+                    $c = array_values($c_data);
+                    break;
+                }
+            }
+            csvWrite(__DIR__.'/data/checklists.csv', $checklistH, $checklists);
+
+            header('Location: imprimir_checklist.php?checklist_id=' . $id_checklist_aberto);
+            exit;
+        }
+    }
+}
+
+// Verifica se há um checklist aberto para o usuário e máquina
+$checklist_aberto = null;
+foreach ($checklists as $c) {
+    if (count($c) !== count($checklistH)) continue;
+    $c_data = array_combine($checklistH, $c);
+    // Verificação segura da chave 'usuario' para evitar o erro
+    if (($c_data['usuario'] ?? '') === $u['nome'] && ($c_data['tipo_checklist'] ?? '') === 'abertura' && ($c_data['status_checklist'] ?? '') === 'aberto') {
+        $checklist_aberto = $c_data;
+        break;
+    }
+}
+
+?>
+
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Workplace</title>
+    <link rel="stylesheet" href="assets/stylenew.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            flex: 1;
+            margin-right: 15px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        /* Style para a seção do checklist */
+        #checklist-form {
+            display: none;
+        }
+        #checklist-form.visible {
+            display: block;
+        }
+        .fab-button {
+            /* Torna o botão fixo na tela */
+            position: fixed;
+            
+            /* Posiciona o botão a 20px da borda inferior e direita */
+            bottom: 20px;
+            right: 20px;
+            
+            /* Garante que o botão fique acima de outros elementos */
+            z-index: 1000;
+            
+            /* Estilo e tamanho */
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            
+            /* Centraliza o ícone SVG */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* Efeitos visuais */
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .fab-button:hover {
+            background-color: #303f9f;
+            transform: scale(1.05);
+        }
+        .fab-button svg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header-painel">
+        <h1>Painel</h1>
+        <ul class="main-menu">
+            <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
+        </ul>
+        <div class="user-info">
+            <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
+            <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
+        </div>
+    </header>
+
+    <ul class="main-menu">
+        <?php if (isOperador() || isMaster()): ?>
+            <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
+        <?php endif; ?>
+        <?php if (isSupervisor() || isMaster()): ?>
+            <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
+            <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
+        <?php endif; ?>
+        <?php if (isMecanica()): ?>
+            <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
+        <?php endif; ?>
+        <?php if (isSupervisor() || isMaster()): ?>
+            <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+            <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+        <?php endif; ?>
+        <?php if (isMaster()): ?>
+            <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+        <?php endif; ?>
+        <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
+    </ul>
+
+    <main class="container">
+        <h2>Checklist Pré-Operacional</h2>
+        <?php if ($erro_checklist): ?>
+            <div class="alert"><?= htmlspecialchars($erro_checklist) ?></div>
+        <?php endif; ?>
+
+        <form method="post" id="checklistForm">
+            <div class="form-group">
+                <label for="maquina">Máquina</label>
+                <select id="maquina" name="maquina">
+                    <option value="">Selecione uma máquina</option>
+                    <?php 
+                    $maquinas_disponiveis = array_filter($maquinas, function($r) use ($maqH) {
+                        if (count($r) !== count($maqH)) return false;
+                        $maq_data = array_combine($maqH, $r);
+                        return ($maq_data['status'] ?? '') === 'disponivel';
+                    });
+                    foreach($maquinas_disponiveis as $r):
+                        if (count($r) !== count($maqH)) continue;
+                        $maq_data = array_combine($maqH, $r);
+                        $selected = ($checklist_aberto && ($checklist_aberto['id_maquina'] ?? '') === $maq_data['id']) ? 'selected' : '';
+                        ?>
+                        <option value="<?= htmlspecialchars($maq_data['id']) ?>" data-tipo="<?= htmlspecialchars($maq_data['tipo']) ?>" <?= $selected ?>>
+                            <?= htmlspecialchars($maq_data['nome']) ?>-<?= htmlspecialchars($maq_data['tipo']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div id="checklist-form" class="checklist-form">
+                <?php if ($checklist_aberto): ?>
+                    <h3>Fechamento de Turno <Span id="tipomaqdiv"></Span></h3>
+                    <p>Fechando o turno para a máquina: <strong>
+                        <?= htmlspecialchars($maquinas_map[$checklist_aberto['id_maquina'] ?? '']['nome'] ?? 'N/A') ?></strong></p>
+                    <input type="hidden" name="id_checklist_aberto" value="<?= htmlspecialchars($checklist_aberto['id'] ?? '') ?>">
+                    <div class="form-group">
+                        <label for="orimetro">Horímetro Final</label>
+                        <input type="number" step="0.01" id="orimetro" name="orimetro" required>
+                    </div>
+                    <input type="hidden" name="action" value="fechar_turno">
+                    <button type="submit" class="btn-submit">Fechar Turno</button>
+                <?php else: ?>
+                    <h3>Abertura de Turno -  <?= htmlspecialchars($maq_data['nome']) ?>-<?= htmlspecialchars($maq_data['tipo']) ?></h3>
+                    <div class="form-group">
+                        <label for="orimetro">Horímetro Inicial</label>
+                        <input type="number" step="0.01" id="orimetro" name="orimetro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="turno">Turno</label>
+                        <select id="turno" name="turno" required>
+                            <option value="">Selecione o turno</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                        </select>
+                    </div>
+                    <div id="questions"></div>
+                    <div class="form-group">
+                        <label for="observacoes">Observações Gerais</label>
+                        <textarea id="observacoes" name="observacoes" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="fab-button">
+                        <input type="hidden" name="action" value="abrir_turno">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24" height="24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                <?php endif; ?>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const maquinaSelect = document.getElementById('maquina');
+            const checklistSection = document.getElementById('checklist-form');
+            const questionsDiv = document.getElementById('questions');
+
+            maquinaSelect.addEventListener('change', showChecklist);
+            
+            // Exibe o checklist se uma máquina já estiver selecionada (ao carregar a página)
+            if (maquinaSelect.value !== "") {
+                showChecklist();
+            }
+
+            async function showChecklist() {
+                const selectedOption = maquinaSelect.options[maquinaSelect.selectedIndex];
+                const tipo = selectedOption.getAttribute('data-tipo');
+                
+                // Limpa as perguntas anteriores
+                questionsDiv.innerHTML = '';
+
+                // Se nada for selecionado, esconde a seção
+                if (!tipo) {
+                    checklistSection.style.display = 'none';
+                    return;
+                }
+
+                // Exibe a seção do checklist
+                checklistSection.style.display = 'block';
+
+                // Carrega o horímetro, pois a lógica de fechamento ainda existe
+                const orimetroInput = document.getElementById('orimetro');
+                orimetroInput.value = '';
+
+                // Verifica se o checklist de abertura já está em andamento (lógica do PHP)
+                const checklistAberto = "<?= $checklist_aberto ? 'true' : 'false' ?>";
+
+                if (checklistAberto === 'true') {
+                     // A lógica para fechamento de turno já está no PHP, não precisa de mais JS aqui
+                     return;
+                }
+
+                // Se for uma abertura de turno, busca as perguntas do servidor
+                try {
+                    const response = await fetch(`workplace.php?action=get_perguntas&tipo_maquina=${tipo}`);
+                    if (!response.ok) {
+                        throw new Error('Erro ao carregar as perguntas.');
+                    }
+                    const perguntas = await response.json();
+                    
+                    perguntas.forEach(pergunta => {
+                        const questionHtml = `
+                            <div class="form-group">
+                                <label>${pergunta.label}</label>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="respostas[${pergunta.chave}]" value="OK" required> OK</label>
+                                    <label><input type="radio" name="respostas[${pergunta.chave}]" value="NC" required> NC</label>
+                                    <label><input type="radio" name="respostas[${pergunta.chave}]" value="N/A" required> N/A</label>
+                                </div>
+                            </div>`;
+                        questionsDiv.innerHTML += questionHtml;
+                    });
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    questionsDiv.innerHTML = '<p>Não foi possível carregar as perguntas.</p>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

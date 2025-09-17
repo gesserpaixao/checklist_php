@@ -131,4 +131,98 @@ th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
             display: block;
         }
 
-        
+        .fab-button {
+    /* Torna o botão fixo na tela */
+    position: fixed;
+    
+    /* Posiciona o botão a 20px da borda inferior e direita */
+    bottom: 20px;
+    right: 20px;
+    
+    /* Garante que o botão fique acima de outros elementos */
+    z-index: 1000;
+    
+    /* Estilo e tamanho */
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    
+    /* Centraliza o ícone SVG */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Efeitos visuais */
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.fab-button:hover {
+    background-color: #303f9f;
+    transform: scale(1.05);
+}
+
+.fab-button svg {
+    width: 24px;
+    height: 24px;
+}
+/* Torna a tabela responsiva em telas menores */
+@media screen and (max-width: 768px) {
+    table, thead, tbody, th, td, tr { 
+        display: block; 
+    }
+    
+    thead tr { 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    tr {
+        margin: 0 0 1rem 0;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    td {
+        border: none;
+        border-bottom: 1px solid #eee; 
+        position: relative;
+        padding-left: 50%;
+        text-align: left;
+    }
+    
+    td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+    }
+}
+
+.letramaiuscula::first-letter {
+  text-transform: uppercase;
+}
+.header-painel {
+    display: flex; /* Garante que os itens fiquem lado a lado */
+    align-items: center; /* Alinha os itens verticalmente no centro */
+    justify-content: space-between; /* Distribui o espaço entre os itens */
+    /* Mantenha as outras propriedades do seu header */
+}
+
+.header-logo {
+    height: 100px; /* Define a altura da imagem. Ajuste conforme necessário */
+    width: auto; /* Mantém a proporção da imagem */
+    margin-right: 20px; /* Cria um espaço entre a imagem e o título */
+}
+
+.header-painel h1 {
+    margin: 0; /* Remove a margem padrão do h1 para um melhor alinhamento */
+}

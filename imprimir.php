@@ -7,6 +7,7 @@ require_once __DIR__ . '/inc/csv.php';
 require_once __DIR__ . '/inc/utils.php';
 
 requireLogin();
+$u = currentUser();
 
 // As fun\u00e7\u00f5es auxiliares foram removidas daqui para evitar a re-declara\u00e7\u00e3o.
 // Elas agora s\u00e3o carregadas a partir de inc/utils.php.
@@ -40,6 +41,16 @@ foreach ($maquinas_rows as $r) {
 
     $maquinas_map[$id] = ['nome' => $nome, 'tipo' => $tipo];
     $tipos_maquinas[$tipo] = $tipo;
+
+    $data_inicio_filtro = $_GET['data_inicio'] ?? '';
+    $data_fim_filtro = $_GET['data_fim'] ?? '';
+    $tipo_filtro = $_GET['tipo'] ?? '';
+    $maquina_filtro = $_GET['maquina'] ?? ''; // <--- ADICIONE ESTA LINHA
+
+    $start = !empty($data_inicio_filtro) ? new DateTime($data_inicio_filtro . ' 00:00:00') : null;
+    $end   = !empty($data_fim_filtro) ? new DateTime($data_fim_filtro . ' 23:59:59') : null;
+
+
 }
 
 // ---------- Filtros ----------
@@ -79,7 +90,9 @@ foreach ($checklists_rows as $row) {
         }
     }
 
-    if ($passa_tipo && $passa_data) {
+    $passa_maquina = empty($maquina_filtro) || strpos(strtolower($maquina_id), strtolower($maquina_filtro)) !== false;
+
+  if ($passa_tipo && $passa_data && $passa_maquina) {
         $checklists_visiveis[] = [
             'id' => $id_chk ?: '',
             'maquina_id' => $maquina_id ?: '',
@@ -115,8 +128,7 @@ foreach ($checklists_rows as $row) {
         .modal .card { width: min(600px, 95%); background:#fff; border-radius:12px;box-shadow:0 10px 30px rgba(5, 45, 19, 0.3); overflow:hidden;animation: slideIn .3s ease;}
         .modal-header {display:flex; justify-content:space-between; align-items:center;background:#0d6efd; color:#fff; padding:12px 16px;}
         .modal-header h3 { margin:0; font-size:18px; display:flex; gap:8px; align-items:center; }
-        .close-btn {background:none; border:none; color:#fff; font-size:20px; cursor:pointer;transition: transform 0.2s;}
-        .close-btn:hover { transform: scale(1.2); }
+        .close-btn { background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
         .modal pre { white-space:pre-wrap; word-break:break-word; background:#f7f7f7; padding:14px; border-radius:8px; font-size:13px; }
         .modal-body { padding:18px; font-size:14px; }
         .modal-table { width:100%; border-collapse:collapse; }
@@ -127,23 +139,61 @@ foreach ($checklists_rows as $row) {
         .status-erro { background:#f8d7da; color:#842029; }
         @keyframes fadeIn { from {opacity:0;  transform:scale(.95);}} to {opacity:1; transform:scale(1);} }
         @keyframes slideIn { from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;} }
+        @media print {.btn, .action-buttons, .no-print {display: none !important;}}
+
+        .btn-fixed-width {min-width: 120px; /* Ajuste este valor conforme o desejado */text-align: center;
+        min-width: 100px; /* Ajuste este valor se precisar de um tamanho diferente */}
     </style>
 </head>
 <body style="background:#f3f4f6;font-family:Inter,system-ui,Arial;">
-    <div class="container">
-        <h2>Checklists</h2>
+    <header class="header-painel">
+            <h1>Painel</h1>
+            <ul class="main-menu">
+                <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
+            </ul>
+            <div class="user-info">
+                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
+                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
+            </div>
+        </header>
+        <ul class="main-menu">
+            <?php if (isOperador() || isMaster()): ?>
+                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
+            <?php endif; ?>
+            <?php if (isSupervisor() || isMaster()): ?>
+                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
+                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
+            <?php endif; ?>
+               <?php if (isMecanica()): ?>
+                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
+            <?php endif; ?>
+          
+             <?php if (isSupervisor() || isMaster()): ?>
+                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
+                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
+            <?php endif; ?>
 
+             <?php if (isMaster()): ?>
+                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
+            <?php endif; ?>
+            <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
+        </ul>
+
+    <div class="container" >
+        
+    <h2>Checklists</h2>
+     <div style="display: flex; gap: 8px; align-items: flex-end;">
         <form class="filter-form" method="get" action="imprimir.php">
             <div>
                 <label for="data_inicio">De</label>
                 <input type="date" id="data_inicio" name="data_inicio" value="<?= htmlspecialchars($data_inicio_filtro) ?>">
             </div>
             <div>
-                <label for="data_fim">At\u00e9</label>
+                <label for="data_fim">Até</label>
                 <input type="date" id="data_fim" name="data_fim" value="<?= htmlspecialchars($data_fim_filtro) ?>">
             </div>
             <div>
-                <label for="tipo">Tipo da M\u00e1quina</label>
+                <label for="tipo">Tipo da Máquina</label>
                 <select id="tipo" name="tipo">
                     <option value="">-- Todos --</option>
                     <?php foreach($tipos_maquinas as $t): ?>
@@ -151,10 +201,36 @@ foreach ($checklists_rows as $row) {
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div style="align-self:flex-end;">
-                <button class="btn">Filtrar</button>
+            <div class="filter-form" style="display: flex; gap: 8px; align-items: flex-end;">
+                <button class="btn btn-fixed-width">Filtrar</button>
             </div>
+            
         </form>
+        
+        <div class="filter-form" style="display: flex; gap: 8px; align-items: flex-end;">
+            <label for="maquina">Máquina:</label>
+            <input type="text" id="maquina" name="maquina" value="<?= htmlspecialchars($_GET['maquina'] ?? '') ?>" placeholder="Número da Máquina">
+        </div>
+        <div class="filter-form" style="display: flex; gap: 8px; align-items: flex-end;">
+             <button class="btn btn-fixed-width" id="filter-by-machine-btn">Pesquisar</button>
+        </div>
+    </div>
+                <script>
+                    document.getElementById('filter-by-machine-btn').addEventListener('click', function() {
+                    const machineNumber = document.getElementById('maquina').value.trim().toLowerCase();
+                    const tableRows = document.querySelectorAll('table tbody tr');
+
+                    tableRows.forEach(row => {
+                        const machineColumn = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+
+                        if (machineNumber === '' || machineColumn.includes(machineNumber)) {
+                            row.style.display = ''; // Mostra a linha
+                        } else {
+                            row.style.display = 'none'; // Esconde a linha
+                        }
+                    });
+                });
+                </script>
 
         <?php if (!empty($checklists_visiveis)): ?>
             <table class="table">
@@ -176,35 +252,49 @@ foreach ($checklists_rows as $row) {
                         $dateDisplay = $r['data_obj'] ? $r['data_obj']->format('d/m/Y H:i') : ($r['data_raw'] ?: '');
                         $jsonAttr = htmlspecialchars(json_encode($r['raw'], JSON_UNESCAPED_UNICODE|JSON_HEX_APOS|JSON_HEX_QUOT), ENT_QUOTES);
                         
-                        // --- L\u00f3gica para calcular datas da semana ---
+                        // --- Lógica para calcular datas da semana ---
                         $semanal_url = "#";
                         if ($r['data_obj'] && $r['maquina_id']) {
                             $data_base = clone $r['data_obj'];
                             
-                            // Define o in\u00edcio da semana para segunda-feira
+                            // Define o início da semana para segunda-feira
                             $inicio_semana = $data_base->modify('this week Monday');
                             
                             // Define o fim da semana para o domingo seguinte
                             $fim_semana = (clone $inicio_semana)->modify('+6 days');
 
                             $semanal_url = "imprimir_checklist_semanal.php?" . 
-                                             "id_maquina=" . urlencode($r['maquina_id']) .
-                                             "&data_inicio=" . urlencode($inicio_semana->format('Y-m-d')) .
-                                             "&data_fim=" . urlencode($fim_semana->format('Y-m-d'));
+                                           "id_maquina=" . urlencode($r['maquina_id']) .
+                                           "&data_inicio=" . urlencode($inicio_semana->format('Y-m-d')) .
+                                           "&data_fim=" . urlencode($fim_semana->format('Y-m-d'));
                         }
                     ?>
                         <tr>
                             <td><?=htmlspecialchars($r['id'])?></td>
                             <td><?=htmlspecialchars($minfo['nome'])?></td>
-                            <td><?=htmlspecialchars($minfo['tipo'])?></td>
+                            <td class="letramaiuscula"><?=htmlspecialchars($minfo['tipo'])?></td>
                             <td><?=htmlspecialchars($r['operador'])?></td>
                             <td><?=htmlspecialchars($r['status'])?></td>
                             <td><?= $dateDisplay ?></td>
                             <td>
                                 <div class="action-buttons">
                                     <button class="view-btn" data-json='<?=$jsonAttr?>' onclick="openFromBtn(this)">Ver</button>
-                                    <a class="print-btn" href="imprimir_checklist.php?checklist_id=<?=urlencode($r['id'])?>">Imprimir</a>
-                                    <a class="print-btn" href="<?= htmlspecialchars($semanal_url) ?>">Semanal</a>
+                                    <a class="print-btn no-print" href="imprimir_checklist.php?checklist_id=<?=urlencode($r['id'])?>" >Imprimir</a>
+                                    
+                                    <!-- PDF individual -->
+                                    <a href="imprimir_checklist_pdf.php?checklist_id=<?= urlencode($r['id'] ?? '') ?>" 
+                                    class="btn btn-danger btn-print no-print">⬇️ PDF</a>
+                                    
+                                    <!-- PDF semanal -->
+                                    <a href="imprimir_checklist_semanal_pdf.php?id_maquina=<?=urlencode($r['maquina_id'])?>&data_inicio=<?=urlencode($inicio_semana->format('Y-m-d'))?>&data_fim=<?=urlencode($fim_semana->format('Y-m-d'))?>"
+                                    class="btn btn-danger btn-print">
+                                    ⬇️ PDF Semanal
+                                    </a>
+                                    <!--  semanal -->
+                                    <a href="imprimir_checklist_semanal.php?id_maquina=<?=urlencode($r['maquina_id'])?>&data_inicio=<?=urlencode($inicio_semana->format('Y-m-d'))?>&data_fim=<?=urlencode($fim_semana->format('Y-m-d'))?>"
+                                    class="btn btn-danger btn-print">
+                                    ⬇️ Semanal
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -221,8 +311,7 @@ foreach ($checklists_rows as $row) {
         <div class="card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
             <div class="modal-header">
                 <h3 id="modalTitle">Detalhes do Checklist</h3>
-                <button onclick="closeModal()" 
-                style="background:#ef4444;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer">✕</button>
+                <button onclick="closeModal()" class="close-btn">✕</button>
             </div>
             <div id="modalBody"></div>
         </div>
@@ -247,7 +336,6 @@ function openModal(obj){
     html += '</table>';
     document.getElementById('modalBody').innerHTML = html;
     document.getElementById('modal').style.display = 'flex';
-    
 }
 
 function openFromBtn(btn){
@@ -256,7 +344,7 @@ function openFromBtn(btn){
         const parsed = JSON.parse(raw);
         openModal(parsed);
     } catch(e) {
-        openModal({'erro':'N\u00e3o foi poss\u00edvel ler os dados do checklist.'});
+        openModal({'erro':'Não foi possível ler os dados do checklist.'});
     }
 }
 
@@ -266,5 +354,3 @@ function closeModal(){
 </script>
 </body>
 </html>
-
-
