@@ -1,8 +1,8 @@
 id,tipo,nome,status,setor
 1,empilhadeira,E50035,disponivel,Dedicado
 2,empilhadeira,50036,disponivel,Dedicado
-3,transpaleteira,50037,disponivel,Dedicado
-4,contrabalancada,50038,em_manutencao,Dedicado
+3,transpaleteira,50037,em_liberacao,Dedicado
+4,contrabalancada,50038,disponivel,Dedicado
 5,glp,500039,disponivel,Dedicado
 "6,""Máquina de Corte"",50040,disponivel,Dedicado"
 "7,""Máquina de Corte"",50041,disponivel,Dedicado"
@@ -10,7 +10,7 @@ id,tipo,nome,status,setor
 "9,""Máquina de Corte"",50043,disponivel,Dedicado"
 10,contrabalancada,50044,disponivel,Dedicado
 11,emp-glp,18,disponivel,multclientes
-12,emp-glp,19,disponivel,multclientes
+12,emp-glp,19,em_liberacao,multclientes
 13,emp-glp,20,disponivel,dedicado
 14,emp-glp,40003,disponivel,dedicado
 15,emp-glp,40009,disponivel,dedicado
@@ -64,7 +64,7 @@ id,tipo,nome,status,setor
 63,transpaleteira,50049,disponivel,multclientes
 64,transpaleteira,50050,disponivel,multclientes
 65,transpaleteira,50051,disponivel,multclientes
-66,transpaleteira,50052,disponivel,multclientes
+66,transpaleteira,50052,em_manutencao,multclientes
 67,transpaleteira,50053,disponivel,multclientes
 68,transpaleteira,50054,disponivel,multclientes
 69,transpaleteira,50055,disponivel,multclientes

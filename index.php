@@ -2,6 +2,7 @@
 require_once __DIR__.'/inc/csv.php';
 require_once __DIR__.'/inc/auth.php';
 
+
 // Inicia a sess\u00e3o para verificar se o usu\u00e1rio j\u00e1 est\u00e1 logado
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -46,8 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <title>Login - Checklist</title>
+    <link rel="icon" href="assets/emp.png" type="image/x-icon">
     <link rel="stylesheet" href="assets/stylenew.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+
 </head>
 <body>
 <div class="container" style="display: flex;">

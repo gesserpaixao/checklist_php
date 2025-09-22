@@ -48,7 +48,9 @@ if (is_array($maquinas)) {
     }
 }
 
-// Lógica para carregar as perguntas via requisição AJAX
+// ---
+// Lógica para carregar as perguntas via requisição AJAX (DEVE ESTAR ANTES DE QUALQUER SAÍDA)
+// ---
 if (isset($_GET['action']) && $_GET['action'] === 'get_perguntas' && isset($_GET['tipo_maquina'])) {
     header('Content-Type: application/json');
     $tipo_maquina = $_GET['tipo_maquina'];
@@ -66,7 +68,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_perguntas' && isset($_GET
     exit;
 }
 
-// Lógica para enviar a maquina para manutencao
+// ---
+// Lógica para enviar a maquina para manutencao (DEVE ESTAR ANTES DE QUALQUER SAÍDA)
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'enviar_manutencao') {
     $id_maquina = $_POST['id_maquina'] ?? null;
     $obs_manut = $_POST['obs_manut'] ?? '';
@@ -101,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // ---
-// Lógica para salvar o checklist (Fechamento/Abertura)
+// Lógica para salvar o checklist (Fechamento/Abertura) (DEVE ESTAR ANTES DE QUALQUER SAÍDA)
 // ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
@@ -164,16 +168,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
 
                 // Atualiza os dados no array original
-                $respostas_serializadas = json_encode($respostas_raw);
-                $falhas = count(array_filter($respostas_raw, function($r) { return $r !== 'OK' && $r !== 'N/A'; }));
-
+                $obs_antiga = $c_data['obs'] ?? '';
+                $nova_obs_completa = trim($obs_antiga . ' - ' . $observacoes, ' -'); // Concatena e limpa espaços e hífen extra
+                
                 $c_data['orimetro_final'] = $orimetro;
                 $c_data['data_fechamento'] = date('c');
                 $c_data['status_checklist'] = 'pendente';
                 $c_data['tipo_checklist'] = 'fechamento';
                 $c_data['check_fechado_por'] = $u['nome'];
-                $c_data['respostas_json'] = $respostas_serializadas;
-                $c_data['falhas'] = $falhas;
+                $c_data['respostas_json'] = ''; // Limpa as respostas antigas, conforme a nova lógica
+                $c_data['falhas'] = 0; // Zera as falhas
+                $c_data['obs'] = $nova_obs_completa; // Atualiza a observação
                 
                 // Mapeia os dados atualizados para a ordem da linha no CSV
                 $c = array_values($c_data);
@@ -218,7 +223,8 @@ if ($maquina_selecionada_id) {
     $ultimo_checklist = $checklists_para_maquina[0] ?? null;
 
     if ($ultimo_checklist) {
-        if (($ultimo_checklist['status_checklist'] ?? '') === 'aberto') {
+        // CORREÇÃO: Usa 'tipo_checklist' e 'data_fechamento' para determinar o formulário
+        if (($ultimo_checklist['tipo_checklist'] ?? '') === 'abertura' && empty($ultimo_checklist['data_fechamento'] ?? '')) {
             $tipo_form = 'fechamento';
             $id_checklist_aberto = $ultimo_checklist['id'] ?? '';
         } else {
@@ -230,6 +236,10 @@ if ($maquina_selecionada_id) {
 }
 
 
+// ---
+// A PARTIR DAQUI, É SEGURO INSERIR O HTML
+// ---
+require_once __DIR__ . '/inc/header.php';
 ?>
 
 <!doctype html>
@@ -303,13 +313,17 @@ if ($maquina_selecionada_id) {
             margin-top: 10px;
         }
 
-
-     
-
         .header-logo {
             height: 40px; /* Define a altura da imagem. Ajuste conforme necessário */
             
             
+        }
+         .instrucao-selecao {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #555;
+            font-style: italic;
         }
 
     </style>
@@ -317,39 +331,7 @@ if ($maquina_selecionada_id) {
 
 <body>
 
-    <header class="header-painel">
     
-    <h1><img src="assets/logo.jpg" alt="Logo da Empresa" class="header-logo"> Painel</h1>
-    
-    <ul class="main-menu">
-        <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
-    </ul>
-    <div class="user-info">
-        <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
-        <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
-    </div>
-</header>
-
-    <ul class="main-menu">
-        <?php if (isOperador() || isMaster()): ?>
-            <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
-        <?php endif; ?>
-        <?php if (isSupervisor() || isMaster()): ?>
-            <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
-            <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
-        <?php endif; ?>
-        <?php if (isMecanica()): ?>
-            <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
-        <?php endif; ?>
-        <?php if (isSupervisor() || isMaster()): ?>
-            <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
-            <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
-        <?php endif; ?>
-        <?php if (isMaster()): ?>
-            <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-        <?php endif; ?>
-        <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
-    </ul>
 
     <main class="container">
         <h2>Checklist Pré-Operacional</h2>
@@ -394,13 +376,18 @@ if ($maquina_selecionada_id) {
                         $status_info = $maquinas_status[$maq_id] ?? null;
 
                         if ($status_info) {
-                            if ($status_info['status_checklist'] === 'em_aprovacao' || ($status_info['status_checklist'] === 'pendente' && ($status_info['tipo_checklist'] ?? '') === 'fechamento')) {
-                                $display_name .= ' (Aguardando Aprovação)';
-                                $disabled = 'disabled';
-                            } elseif ($status_info['status_checklist'] === 'pendente' && ($status_info['tipo_checklist'] ?? '') === 'abertura') {
-                                $display_name .= ' (Aguardando Manutenção)';
-                                $disabled = 'disabled';
-                            } elseif ($status_info['status_checklist'] === 'aberto') {
+                            if ($status_info['status_checklist'] === 'aprovado') {
+                                // Máquina está disponível para novo turno
+                                $display_name .= ' (Disponível)';
+                            } elseif ($status_info['status_checklist'] === 'pendente' || ($status_info['tipo_checklist'] ?? '') === 'abertura' && empty($status_info['data_fechamento'] ?? '')) {
+                                // Checklist aberto ou aguardando aprovação
+                                $display_name .= ' (Aguardando Fechamento ou Aprovação)';
+                                if ($ultimo_checklist['id_maquina'] === $maq_id && $tipo_form === 'fechamento') {
+                                    $disabled = '';
+                                } else {
+                                    $disabled = 'disabled';
+                                }
+                            } elseif (($status_info['tipo_checklist'] ?? '') === 'abertura' && empty($status_info['data_fechamento'] ?? '')) {
                                 $display_name .= ' (Aberto)';
                             }
                         }
@@ -419,7 +406,11 @@ if ($maquina_selecionada_id) {
                 </select>
             </div>
             
-            <div id="checklist-form" class="checklist-form" style="display: <?= $maquina_selecionada_id && !$erro_checklist ? 'block' : 'none' ?>;">
+            <?php if (empty($maquina_selecionada_id)): ?>
+                <p class="instrucao-selecao">Por favor, selecione uma máquina para iniciar o checklist.</p>
+            <?php endif; ?>
+
+            <div id="checklist-form" class="checklist-form" style="display: <?= $maquina_selecionada_id ? 'block' : 'none' ?>;">
                 <?php if ($tipo_form === 'fechamento'): ?>
                     <h3 id="fechamento-titulo">Fechamento de Turno - 
                     <?= htmlspecialchars($maquinas_map[$maquina_selecionada_id]['nome'] ?? 'N/A') ?>
@@ -434,7 +425,6 @@ if ($maquina_selecionada_id) {
                     </div>
                     <input type="hidden" name="id_checklist_aberto" value="<?= htmlspecialchars($id_checklist_aberto) ?>">
                     <input type="hidden" name="maquina" value="<?= htmlspecialchars($maquina_selecionada_id) ?>">
-                    <div id="questions"></div>
                     <div class="form-group">
                         <label for="observacoes">Observações Gerais</label>
                         <textarea id="observacoes" name="observacoes" rows="4"></textarea>
@@ -501,8 +491,8 @@ if ($maquina_selecionada_id) {
 
                 questionsDiv.innerHTML = ''; 
                 
-                // Agora, o formulário de ABERTURA e FECHAMENTO carrega as perguntas
-                if ("<?= $tipo_form ?>" === "abertura" || "<?= $tipo_form ?>" === "fechamento") {
+                // CORREÇÃO: Carrega as perguntas apenas para o formulário de abertura
+                if ("<?= $tipo_form ?>" === "abertura") {
                     try {
                         const response = await fetch(`workplace.php?action=get_perguntas&tipo_maquina=${tipo}`);
                         if (!response.ok) {

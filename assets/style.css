@@ -1,5 +1,5 @@
 body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;background:#f3f4f6;color:#111}
-.container{max-width:900px;margin:24px auto;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.containerMecanica{max-width:900px;margin:24px auto;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
 .card.center{width:360px;margin:80px auto;padding:20px;text-align:center}
 input,select,textarea{display:block;width:100%;padding:8px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
 button{padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;border:none}

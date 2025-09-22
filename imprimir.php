@@ -5,6 +5,7 @@ date_default_timezone_set('America/Sao_Paulo');
 require_once __DIR__ . '/inc/auth.php';
 require_once __DIR__ . '/inc/csv.php';
 require_once __DIR__ . '/inc/utils.php';
+require_once __DIR__ . '/inc/header.php';
 
 requireLogin();
 $u = currentUser();
@@ -110,7 +111,9 @@ foreach ($checklists_rows as $row) {
 <head>
     <meta charset="utf-8">
     <title>Checklists</title>
-    <link rel="stylesheet" href="assets/style.css">
+     <link rel="icon" href="assets/emp.png" type="image/x-icon">
+    <link rel="stylesheet" href="assets/stylenew.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .container { max-width: 1100px; margin: 28px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.06);}
         .filter-form { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; align-items:flex-end; }
@@ -133,53 +136,21 @@ foreach ($checklists_rows as $row) {
         .modal-body { padding:18px; font-size:14px; }
         .modal-table { width:100%; border-collapse:collapse; }
         .modal-table th, .modal-table td {text-align:left; padding:8px; border-bottom:1px solid #eee;}
-        .modal-table th { background:#f2f4f7; width:30%; font-weight:600; }.status-badge {display:inline-block; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+        .modal-table th { background:#f2f4f7; width:30%; font-weight:600; }
+        .status-badge {display:inline-block; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
         .status-ok { background:#d1e7dd; color:#0f5132; }
         .status-pendente { background:#fff3cd; color:#664d03; }
         .status-erro { background:#f8d7da; color:#842029; }
         @keyframes fadeIn { from {opacity:0;  transform:scale(.95);}} to {opacity:1; transform:scale(1);} }
         @keyframes slideIn { from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;} }
         @media print {.btn, .action-buttons, .no-print {display: none !important;}}
-
         .btn-fixed-width {min-width: 120px; /* Ajuste este valor conforme o desejado */text-align: center;
         min-width: 100px; /* Ajuste este valor se precisar de um tamanho diferente */}
     </style>
 </head>
 <body style="background:#f3f4f6;font-family:Inter,system-ui,Arial;">
-    <header class="header-painel">
-            <h1>Painel</h1>
-            <ul class="main-menu">
-                <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
-            </ul>
-            <div class="user-info">
-                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
-                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
-            </div>
-        </header>
-        <ul class="main-menu">
-            <?php if (isOperador() || isMaster()): ?>
-                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
-            <?php endif; ?>
-            <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
-                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
-            <?php endif; ?>
-               <?php if (isMecanica()): ?>
-                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
-            <?php endif; ?>
-          
-             <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
-                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
-            <?php endif; ?>
 
-             <?php if (isMaster()): ?>
-                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-            <?php endif; ?>
-            <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
-        </ul>
-
-    <div class="container" >
+<div class="container" >
         
     <h2>Checklists</h2>
      <div style="display: flex; gap: 8px; align-items: flex-end;">

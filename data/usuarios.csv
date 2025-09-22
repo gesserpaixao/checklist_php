@@ -2,7 +2,12 @@ nome,senha,perfil,setor
 master,1234,master,master
 supervisor,1234,supervisor,supervisor
 operador,1234,operador,operador
+hse,1234,hse,hse
+qualidade,1234,hse,qualidade
 mecanico,1234,mecanico
+carlos.santos,1234,supervisor,supervisor
+leandro.pereira,1234,supervisor,supervisor
+gustavo.freitas,1234,supervisor,master
 caio.dias,sapsap,operador
 anderson.silva,sapsap,operador
 aparecido.campos,sapsap,supervisor

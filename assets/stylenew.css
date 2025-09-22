@@ -1,5 +1,8 @@
  body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;background:#f3f4f6;color:#111}
+.containerMaior{max-width:1900px;margin:4px auto;padding:6px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.containerMedio{max-width:1800px;margin:4px auto;padding:6px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
 .container{max-width:900px;margin:24px auto;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.containerMecanica{max-width:1800px;margin:4px auto;padding:6px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
 .card.center{width:360px;margin:80px auto;padding:20px;text-align:center}
 input,select,textarea{display:block;width:100%;padding:8px;margin:6px 0;border:1px solid #ddd;border-radius:8px}
 button{padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;border:none}
@@ -7,6 +10,13 @@ button{padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;border:n
 .muted{color:#6b7280;font-size:13px}
 table{width:100%;border-collapse:collapse;margin-top:12px}
 th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.daterangepicker {z-index: 9999 !important;}
+.status-badge {display:inline-block; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+.status-ok { background:#d1e7dd; color:#0f5132; }
+.status-pendente { background:#fff3cd; color:#664d03; }
+.status-erro { background:#f8d7da; color:#842029; }
+
+
 .opcoes-radio {
     display: flex; /* Makes the container a flexbox */
     gap: 15px; /* Adds space between the radio button labels */
@@ -237,3 +247,37 @@ th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
 .header-painel h1 {
     margin: 0; /* Remove a margem padrão do h1 para um melhor alinhamento */
 }
+
+
+/* css para investigacao_forms botao enviar arquivo */
+.file-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .file-upload-container input[type="file"] {
+            display: none; /* Esconde o input de arquivo padrão */
+        }
+        
+        .custom-file-upload {
+            border: 1px solid #ccc;
+            display: inline-block;
+            padding: 8px 12px;
+            cursor: pointer;
+            background-color: #0d6efd;
+            color: #fff;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #0b5ed7;
+        }
+
+        #file-name {
+            font-size: 14px;
+            color: #555;
+            flex-grow: 1; /* Permite que o span ocupe o espaço restante */
+        }

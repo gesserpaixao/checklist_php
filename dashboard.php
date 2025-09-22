@@ -4,13 +4,14 @@ declare(strict_types=1);
 date_default_timezone_set('America/Sao_Paulo');
 
 require_once __DIR__ . '/inc/auth.php';
+require_once __DIR__ . '/inc/header.php';
 requireLogin();
 $u = currentUser();
 
 // Replace it with this more robust code:
 if (isset($u) && is_array($u)) {
     // Variable $u exists and is an array, so it is safe to use.
-     $safe_value = htmlspecialchars($u['some_key'] ?? '');
+    $safe_value = htmlspecialchars($u['some_key'] ?? '');
 } else {
     // Handle the case where the variable is not defined or is not an array.
     // Set a default value to prevent further errors.
@@ -57,6 +58,7 @@ $frota_manutencao = 0;
 $frota_nao_conforme = 0;
 $frota_em_aprovacao = 0;
 $checklists_abertos_hoje = 0;
+$maquinas_manutencao_longa = 0;
 
 // Processar dados para os cards
 foreach ($checklists_map as $checks) {
@@ -69,8 +71,8 @@ foreach ($checklists_map as $checks) {
 
 // Processar dados para os cards
 foreach ($checklists_map as $checks) {
-    if ($checks['falhas'] >0) {       
-                $frota_nao_conforme++;    
+    if (($checks['falhas'] ?? 0) > 0) {
+        $frota_nao_conforme++;
     }
 }
 
@@ -86,7 +88,39 @@ foreach ($maquinas_map as $maq) {
     }
 }
 
+// Novo: Processar dados para o card de manutenção longa
+foreach ($maquinas_map as $maq) {
+    if (($maq['status'] ?? '') === 'em_manutencao') {
+        $manutencao_id = getLatestMaintenanceId($maq['id'] ?? '', $manutencoes, $manutH);
+        
+        if ($manutencao_id) {
+            $manutencao_info = null;
+            foreach ($manutencoes as $m) {
+                if (count($m) === count($manutH)) {
+                    $m_data = array_combine($manutH, $m);
+                    if (($m_data['id'] ?? '') === $manutencao_id) {
+                        $manutencao_info = $m_data;
+                        break;
+                    }
+                }
+            }
 
+            if ($manutencao_info && isset($manutencao_info['data_inicio'])) {
+                try {
+                    $inicio = new DateTime($manutencao_info['data_inicio']);
+                    $agora = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+                    $intervalo = $agora->diff($inicio);
+
+                    if ($intervalo->days >= 2) {
+                        $maquinas_manutencao_longa++;
+                    }
+                } catch (Exception $e) {
+                    error_log('Erro ao calcular a data: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+}
 
 // Contar checklists abertos para o card
 $hoje = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');
@@ -120,44 +154,12 @@ $checklists_visiveis = array_filter($checklists, function ($c) use ($u, $checkH,
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="assets/emp.png" type="image/x-icon">
+ 
     <link rel="stylesheet" href="assets/stylenew.css">
 </head>
 <body>
-<header class="header-painel">
-            <h1>Painel</h1>
-            <ul class="main-menu">
-                <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
-            </ul>
-            <div class="user-info">
-                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
-                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
-            </div>
-        </header>
-        <ul class="main-menu">
-            <?php if (isOperador() || isMaster()): ?>
-                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
-            <?php endif; ?>
-            <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
-                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
-            <?php endif; ?>
-               <?php if (isMecanica()): ?>
-                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
-            <?php endif; ?>
-          
-             <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
-                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
-            <?php endif; ?>
-
-             <?php if (isMaster()): ?>
-                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-            <?php endif; ?>
-            <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
-        </ul>
-
-    <main class="container">
+    <main class="containerMaior">
         <h2>Dashboard</h2>
         <section class="dashboard-cards">
             <div class="card status-ativo">
@@ -167,6 +169,10 @@ $checklists_visiveis = array_filter($checklists, function ($c) use ($u, $checkH,
             <div class="card status-manutencao">
                 <h3>Em Manutenção</h3>
                 <p><?= $frota_manutencao ?></p>
+            </div>
+            <div class="card status-manutencao-longa">
+                <h3>Em Manutenção (> 2 dias)</h3>
+                <p><?= $maquinas_manutencao_longa ?></p>
             </div>
             <div class="card status-nao-conforme">
                 <h3>Não Conforme</h3>
@@ -183,7 +189,7 @@ $checklists_visiveis = array_filter($checklists, function ($c) use ($u, $checkH,
         </section>
 
         <?php if (isSupervisor() || isAdministrador() || isMaster()): ?>
-            <h3>Checklists Pendentes</h3>
+            <h3>Checklists Pendentes Hoje</h3>
             <table>
                 <thead>
                     <tr>

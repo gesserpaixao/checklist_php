@@ -1,0 +1,2 @@
+id,data_invest,id_maquina,id_checklist,operador,supervisor,nome_investigador,causa_raiz,analise_hse,parecerhse,aprovacao_parecer,data_aprovacao,evidencias_path
+inv_68cebf1d5634f,2025-09-20T11:50:05-03:00,2,2,master,gesser,master,"{""pq1"":""acertou a longarina"",""pq2"":""destração""}","Apos a verificação, fizemos","Falha do operador",,,"[""store\/hse\/evidencia_68cebf1d5720a.png""]"

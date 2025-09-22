@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__.'/inc/auth.php'; requireLogin();
 require_once __DIR__.'/inc/csv.php';
+require_once __DIR__ . '/inc/header.php';
+
 $u = currentUser();
 if(!isSupervisor()) header('Location: dashboard.php');
 
@@ -26,26 +28,36 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         csvWrite(__DIR__.'/data/maquinas.csv',$mh,$mrows);
 
         // append manutencoes
+        // Este é o array com todas as 19 colunas, garantindo a consistência do arquivo CSV
         $novo_registro = [
-            uniqid('m_'), // id (0)
-            $idmaq, // id_maquina (1)
-            date('c'), // entrada (2)
-            '', // saida (3)
-            currentUser()['nome'], // responsavel (4)
-            $obs, // obs (5)
-            date('c'), // data_inicio (6)
-            '', // data_fim (7)
-            '', // mecanico (8)
-            'em_reparo', // status (9)
-            $obs, // descricao_problema (10)
-            '', // descricao_manutencao (11)
-            '', // anexos (12)
-            '', // check_id (13)
-            '', // aberto_por (14)
-            '', // id_checklist (15)
-            ''  // prioridade (16)
+            'id' => uniqid('m_'), 
+            'id_maquina' => $idmaq,
+            'entrada' => date('c'),
+            'saida' => '',
+            'responsavel' => currentUser()['nome'],
+            'obs' => $obs,
+            'data_inicio' => date('c'),
+            'data_fim' => '',
+            'mecanico' => '',
+            'status' => 'em_reparo',
+            'descricao_problema' => $obs,
+            'descricao_manutencao' => '',
+            'anexos' => '',
+            'check_id' => '',
+            'aberto_por' => currentUser()['nome'],
+            'id_checklist' => '',
+            'prioridade' => '',
+            'conclusao' => '',
+            'acoes' => '' 
         ];
-        csvAppend(__DIR__.'/data/manutencoes.csv', $novo_registro);
+
+        // Mapeia o novo registro com o cabeçalho para garantir a ordem correta
+        $novo_registro_array = [];
+        foreach($mth as $header_col) {
+            $novo_registro_array[] = $novo_registro[$header_col] ?? '';
+        }
+
+        csvAppend(__DIR__.'/data/manutencoes.csv', $novo_registro_array);
         
         header('Location: manutencao.php'); exit;
     }
@@ -85,45 +97,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 <head>
     <meta charset="utf-8">
     <title>Manutenção</title>
+    <link rel="icon" href="assets/emp.png" type="image/x-icon">
     <link rel="stylesheet" href="assets/stylenew.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-      <header class="header-painel">
-            <h1>Painel</h1>
-            <ul class="main-menu">
-                <li><a href="dashboard.php"><i class="fa-solid fa-clipboard-list"></i>Dashboard</a></li>
-            </ul>
-            <div class="user-info">
-                <span><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['perfil']) ?>)</span>
-                <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
-            </div>
-        </header>
-        <ul class="main-menu">
-            <?php if (isOperador() || isMaster()): ?>
-                <li><a href="workplace.php"><i class="fa-solid fa-clipboard-list"></i>Workplace</a></li>
-            <?php endif; ?>
-            <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="aprovacao.php"><i class="fa-solid fa-check-to-slot"></i>Aprovação</a></li>
-                <li><a href="manutencao.php"><i class="fa-solid fa-wrench"></i>Manutenção</a></li>
-            <?php endif; ?>
-               <?php if (isMecanica()): ?>
-                <li><a href="mecanica.php"><i class="fa-solid fa-wrench"></i>Mecânica</a></li>
-            <?php endif; ?>
-          
-             <?php if (isSupervisor() || isMaster()): ?>
-                <li><a href="imprimir.php"><i class="fa-solid fa-download"></i>Imprimir</a></li>
-                <li><a href="download.php"><i class="fa-solid fa-wrench"></i>Download</a></li>
-            <?php endif; ?>
-
-             <?php if (isMaster()): ?>
-                <li><a href="admin.php"><i class="fa-solid fa-user-gear"></i>Administração</a></li>
-            <?php endif; ?>
-            <li><a href="dashboard.php"><i class="fa-solid fa-wrench"></i>Voltar</a></li>
-        </ul>
 
 <main class="container">
-    <h2>Manutenção</h2>
+    <h2>Tela para controlar entrada e retirada - Manutenção</h2>
     <section>
         <h3>Entrada</h3>
         <form method="post">
